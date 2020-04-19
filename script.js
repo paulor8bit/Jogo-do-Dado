@@ -1,5 +1,6 @@
 $('#segundo').hide(0)
 $('#novojogo').hide(0)
+$('#menor, #maior, #balao').hide(0)
 
 function getInteiroAleatorio (min, max) { 
     const valor = Math.random() * (max - min) + min
@@ -58,12 +59,15 @@ function verifica (resultado) {
 
 }
 
-// function verificaDado (dadoImagem1) {
-
-
-// }
-
 let umavez = 0 
+
+let botaoProximo = document.querySelector("#proximo")
+botaoProximo.addEventListener("click", function(event) {
+    event.preventDefault()
+    $('#menor, #maior, #balao').show(0)
+    $('#proximo').hide(0)
+    
+})
 
 let botaoAdicionar = document.querySelector("#menor")
 botaoAdicionar.addEventListener("click", function(event) {
@@ -71,7 +75,7 @@ botaoAdicionar.addEventListener("click", function(event) {
     let somar = (umavez++)
     if (somar <= 0) {
     $('#segundo, #novojogo').show(0)
-    $('#menor, #maior').hide(0)
+    $('#menor, #maior, #balao, #proximo, #proximo2').hide(0)
     adcionalinha(`O resutado da subtração do terceiro dado da:  ${rolagem.diminuir}`)
     const resultado = rolagem.diminuir
     adcionalinha(verifica(resultado))}
@@ -80,13 +84,14 @@ botaoAdicionar.addEventListener("click", function(event) {
     
 })
 
+
 let botaoAdicionarm = document.querySelector("#maior")
 botaoAdicionarm.addEventListener("click", function(event) {
     event.preventDefault()
     let somar = (umavez++)
     if (somar <= 0) {
     $('#segundo, #novojogo').show(0)
-    $('#menor, #maior').hide(0)
+    $('#menor, #maior, #balao, #proximo, #proximo2').hide(0)
     adcionalinha(`O resultado da soma do terceiro dado da: ${rolagem.somar}`)
     const resultado = rolagem.somar
     adcionalinha(verifica(resultado))}
@@ -99,6 +104,6 @@ let botaoAdicionarn = document.querySelector("#novojogo")
 botaoAdicionarn.addEventListener("click", function(event) {
     // event.preventDefault()
     $('#segundo, novojogo').hide(0)
-    $('#menor, #maior').show(0)
+    $('#menor, #maior, #balao').hide(0)
 
 })

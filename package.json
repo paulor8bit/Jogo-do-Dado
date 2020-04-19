@@ -1,18 +1,19 @@
 {
-  "name": "exercicios",
+  "name": "jogododado",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "http-server . -c-1"
-  },
+    "start": "http-server . -c-1",
+    "surge": "surge -p . -d jogododado.surge.sh"
+    },
   "keywords": [],
-  "author": "",
+  "author": "Paulo R",
   "license": "ISC",
   "devDependencies": {
     "bootstrap": "4.1.1",
     "http-server": "0.11.1",
     "jquery": "3.3.1",
     "popper.js": "1.14.3"
-  }
+  },
+  "description": ""
 }

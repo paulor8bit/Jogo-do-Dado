@@ -5,20 +5,27 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Jogo do Dado</title>
-	<link rel="stylesheet" href="css/bootstrap.min.css">
+    <title>Jogo do Dado</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link
+      href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+    </style>
+	
 </head>
 
 <body>
-	<nav class="navbar navbar-expand-lg navbar-light bg-light">
-		<a class="navbar-brand" wm-link="#">Jogo do Dado</a>
-		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>      
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item dropdown">
+	<nav id="titulo" class="nes-container is-rounded is-dark">
+        <h1 class="nes-text is-warning">Jogo do Dado</a>
+        <i class="nes-icon star"></i>
       </nav>
+
+
+            
+        </h2>
 
 <form id="form-adiciona">
 <div class="card">
@@ -30,38 +37,58 @@
     </div>
     
     <div> 
-    <p>Tente pegar numero menor que 12 e maior que 6</p>
+
+<div class="nes-container with-title is-centered">
+<p class="title"><span id="proximo2"> Tente pegar numero menor que 12 e maior que 6</span></p>
+<p>
     <img src="" alt="..." class=" rounded " width="40" height="40" id="jogadasOpcao1">
     <img src="" alt="..." class=" rounded " width="40" height="40"id="jogadasOpcao2">
-    <p>A soma dos dois dados é: <numero id="jogadasOpcao">  </numero></p>
-    <p>Selecione se o terceiro dado vai subtrair ou somar este resultado</p>
-    </div>
+</p>
+    <p><span id="proximo2">A soma dos dois dados é:</span> <numero id="jogadasOpcao">  </numero></p>
+</div>
 
-    <div class="form-row mb-0">
+<button class="nes-btn is-success" type="submit" id="proximo">Proximo</button>
+
+<br>
+<section class="nes-container" id="balao">
+    <section class="message-list">
+      <section class="message -left">
+        <i class="nes-bcrikko"></i>
+        <div class="nes-balloon from-left">
+          <p>Selecione se o terceiro dado vai subtrair ou somar este resultados</p>
+        </div>
+      </section>
+
+</div>
+<div class="form-row mb-0">
         <div class="col-12 d-flex justify-content-end">
-            <button class="btn btn-success mr-2" type="submit" id="novojogo">Jogar Novamente</button>
+            <button class="nes-btn is-success" type="submit" id="novojogo">Jogar Novamente</button>
         </div>
     </div>
-</form>
+
 </div>
+
 </div>
             <div class="form-row mb-0">
                 <div class="col-12 d-flex justify-content-end">
-                    <button class="btn btn-danger mr-2" type="submit" id="menor">Subtrair</button>
-                    <button class="btn btn-primary" type="submit" id="maior">Somar</button>
+                    <button class="nes-btn is-error" type="submit" id="menor">Subtrair</button>
+                    <button class="nes-btn is-primary" type="submit" id="maior">Somar</button>
+                    <br>
                 </div>
             </div>
-        </form>
+        
     </div>
 </div>
 
 <div class="card" id="segundo">
-<p>O dado que você rolou é: </p>
+
+<div class="nes-container with-title is-centered">
+<p class="title">O dado que você rolou é:</p>
+<p>
 <img src="" alt="..." class=" rounded " width="40" height="40" id="jogadasOpcao3">
-<br>
+<br><br><br>
 <img id="imagem" width="300px" height="200px" src="">
-<!-- <p>O resultado: <numero id="jogadasOpcao">7</numero></p>
-<p>Parabéns você venceu!</p> -->
+
 </div>
 </form>
 
