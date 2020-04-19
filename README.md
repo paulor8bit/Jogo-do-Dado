@@ -2,4 +2,4 @@
 
 $ npm start 
 
-Open the browser 127.0.0.1
+Open the browser http://127.0.0.1
