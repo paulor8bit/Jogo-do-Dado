@@ -2,4 +2,6 @@
 
 $ npm start 
 
-Open the browser http://127.0.0.1
+Abra o navegador com endereço http://127.0.0.1
+
+Exemplo: http://jogododado.surge.sh/
