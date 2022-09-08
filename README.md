@@ -4,4 +4,4 @@ $ npm start
 
 Abra o navegador com endereço http://127.0.0.1
 
-Exemplo: http://jogododado.surge.sh/
+Exemplo: https://paulor8bit.itch.io/jogo-do-dado
