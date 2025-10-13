@@ -1,6 +1,7 @@
 # Jogo dos Dados
-
+<img width="512" height="895" alt="image" src="https://github.com/user-attachments/assets/98964214-7a99-47da-92b7-80dc966ca3df" />
 <img width="537" height="896" alt="image" src="https://github.com/user-attachments/assets/f5c90c1a-73fb-4262-bb09-bb5001cae52e" />
+
 
 Bem-vindo ao "Jogo dos Dados", um roguelike de construção de baralhos inspirado em *Balatro*, mas com uma mecânica central baseada em dados. Este é um jogo de estratégia onde você combina sorte com tática para superar fases cada vez mais difíceis, construindo um baralho de cartas sinérgicas para manipular os resultados dos dados a seu favor.
 
