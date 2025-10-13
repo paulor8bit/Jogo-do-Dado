@@ -1,19 +1,21 @@
 {
-  "name": "jogododado",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "balatro-jogo-dos-dados-(phaser)",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "http-server . -c-1",
-    "surge": "surge -p . -d jogododado.surge.sh"
-    },
-  "keywords": [],
-  "author": "Paulo R",
-  "license": "ISC",
-  "devDependencies": {
-    "bootstrap": "4.1.1",
-    "http-server": "0.11.1",
-    "jquery": "3.3.1",
-    "popper.js": "1.14.3"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "description": ""
+  "dependencies": {
+    "phaser": "^3.90.0",
+    "react": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
 }

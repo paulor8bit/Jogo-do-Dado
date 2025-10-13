@@ -1,0 +1,5 @@
+{
+  "name": "Balatro Jogo dos Dados (Phaser)",
+  "description": "A simple and fun dice game built with Phaser 3. Roll the dice, make a choice to add or subtract the next roll, and try to get a final score greater than or equal to 6 and less than or equal to 12 to win.",
+  "requestFramePermissions": []
+}
