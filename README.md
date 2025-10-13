@@ -152,5 +152,4 @@ Tanto o [Netlify](https://www.netlify.com/) quanto o [Vercel](https://vercel.com
 
 O jogo está no ar e pode ser acessado através dos links abaixo:
 
-*   **Netlify:** **✨ [gatinhosedados.netlify.app](https://gatinhosedados.netlify.app) ✨**
 *   **Vercel:** **🚀 [jogododado.vercel.app](https://jogododado.vercel.app) 🚀**
