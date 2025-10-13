@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 // --- Sound Manager (uses Web Audio API, no assets needed) ---
 const SoundManager = {
     context: new (window.AudioContext || (window as any).webkitAudioContext)(),
+    music: new Audio('assets/gamemusic.mp3'),
+    isMusicPlaying: false,
     play: function(type: 'click' | 'roll' | 'buy' | 'win' | 'lose' | 'activate') {
         try {
             if (!this.context) return;
@@ -40,6 +42,28 @@ const SoundManager = {
         } catch (e) {
             console.error("Could not play sound", e);
         }
+    },
+    playMusic: function() {
+        if (!this.isMusicPlaying) {
+            this.music.loop = true;
+            this.music.volume = 0.3;
+            this.music.play().then(() => {
+                this.isMusicPlaying = true;
+            }).catch(e => console.error("Error playing music:", e));
+        }
+    },
+    pauseMusic: function() {
+        if (this.isMusicPlaying) {
+            this.music.pause();
+            this.isMusicPlaying = false;
+        }
+    },
+    toggleMusic: function() {
+        if (this.isMusicPlaying) {
+            this.pauseMusic();
+        } else {
+            this.playMusic();
+        }
     }
 };
 
@@ -48,6 +72,7 @@ document.body.addEventListener('pointerdown', () => {
     if (SoundManager.context && SoundManager.context.state === 'suspended') {
         SoundManager.context.resume();
     }
+    SoundManager.playMusic(); // Inicia a música aqui
 }, { once: true });
 
 
@@ -214,6 +239,8 @@ class PreloadScene extends Phaser.Scene {
     preload() {
         this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'Carregando...', { fontSize: '32px', color: '#ffffff' }).setOrigin(0.5);
         this.load.image('jubijujuba', 'assets/jubijujuba.jpg');
+        this.load.image('fundo', 'assets/fundo.jpg');
+        this.load.audio('gamemusic', 'assets/gamemusic.mp3');
         
         // Load card images
         for (const card of Object.values(CARD_DEFINITIONS)) {
@@ -239,6 +266,7 @@ class MainMenuScene extends Phaser.Scene {
     constructor() { super('MainMenuScene'); }
     create() {
         const centerX = this.cameras.main.width / 2;
+        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
         const catImage = this.add.image(centerX, 560, 'jubijujuba').setOrigin(0.5);
         catImage.setScale(0.5);
         this.tweens.add({
@@ -271,6 +299,12 @@ class MainMenuScene extends Phaser.Scene {
             this.registry.set('sevenLivesUsed', false);
             this.scene.start('PhaseIntroScene');
         });
+
+        const musicButton = this.add.text(centerX, 650, 'Música: ON', { fontSize: '20px', color: '#ffffff', backgroundColor: '#4f46e5', padding: { x: 10, y: 5 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        musicButton.on('pointerdown', () => {
+            SoundManager.toggleMusic();
+            musicButton.setText(`Música: ${SoundManager.isMusicPlaying ? 'ON' : 'OFF'}`);
+        });
     }
 }
 
@@ -284,8 +318,8 @@ class PhaseIntroScene extends Phaser.Scene {
     constructor() { super('PhaseIntroScene'); }
 
     create() {
-        this.cameras.main.setBackgroundColor('#111827');
         const centerX = this.cameras.main.width / 2;
+        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
         const phase = this.registry.get('currentPhase');
         const goal = getGoalForPhase(phase);
         const previousGoal = getGoalForPhase(phase - 1);
@@ -410,7 +444,8 @@ class MainGameScene extends Phaser.Scene {
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#1f2937');
+        const centerX = this.cameras.main.width / 2;
+        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
         this.choiceUiGroup = this.add.group();
         this.cardUiGroup = this.add.group();
         this.deckViewerGroup = this.add.group();
@@ -1276,8 +1311,8 @@ class ShopScene extends Phaser.Scene {
     constructor() { super('ShopScene'); }
 
     create() {
-        this.cameras.main.setBackgroundColor('#1e1b4b'); // indigo-950
         const centerX = this.cameras.main.width / 2;
+        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
         this.isModalOpen = false;
         this.modalGroup = this.add.group();
         this.modalGroup.setVisible(false);
@@ -1603,9 +1638,8 @@ class GameOverScene extends Phaser.Scene {
     constructor() { super('GameOverScene'); }
     
     create() {
-        this.cameras.main.setBackgroundColor('#7f1d1d');
         const centerX = this.cameras.main.width / 2;
-
+        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
         const finalScore = this.registry.get('totalScore');
         const finalPhase = this.registry.get('currentPhase');
         const highScore = this.registry.get('highScore');
@@ -1657,9 +1691,8 @@ class GameWonScene extends Phaser.Scene {
     constructor() { super('GameWonScene'); }
 
     create() {
-        this.cameras.main.setBackgroundColor('#052e16'); // Dark green
         const centerX = this.cameras.main.width / 2;
-
+        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
         const finalScore = this.registry.get('totalScore');
         const highScore = this.registry.get('highScore');
         let newHighScore = false;
