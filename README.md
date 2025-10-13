@@ -154,3 +154,4 @@ Tanto o [Netlify](https://www.netlify.com/) quanto o [Vercel](https://vercel.com
 O jogo está no ar e pode ser acessado através dos links abaixo:
 
 *   **Vercel:** **🚀 [jogododado.vercel.app](https://jogododado.vercel.app) 🚀**
+*   jogo-do-dado.surge.sh
