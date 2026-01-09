@@ -5,7 +5,7 @@ const SoundManager = {
     context: new (window.AudioContext || (window as any).webkitAudioContext)(),
     music: new Audio('assets/gamemusic.mp3'),
     isMusicPlaying: false,
-    play: function(type: 'click' | 'roll' | 'buy' | 'win' | 'lose' | 'activate') {
+    play: function (type: 'click' | 'roll' | 'buy' | 'win' | 'lose' | 'activate') {
         try {
             if (!this.context) return;
             if (this.context.state === 'suspended') {
@@ -32,10 +32,10 @@ const SoundManager = {
 
             oscillator.type = waveType;
             oscillator.frequency.setValueAtTime(freq, this.context.currentTime);
-            if(type === 'roll') {
-                 oscillator.frequency.exponentialRampToValueAtTime(800, this.context.currentTime + duration);
+            if (type === 'roll') {
+                oscillator.frequency.exponentialRampToValueAtTime(800, this.context.currentTime + duration);
             }
-            
+
             gainNode.gain.exponentialRampToValueAtTime(0.0001, this.context.currentTime + duration);
             oscillator.start(this.context.currentTime);
             oscillator.stop(this.context.currentTime + duration);
@@ -43,7 +43,7 @@ const SoundManager = {
             console.error("Could not play sound", e);
         }
     },
-    playMusic: function() {
+    playMusic: function () {
         if (!this.isMusicPlaying) {
             this.music.loop = true;
             this.music.volume = 0.3;
@@ -52,13 +52,13 @@ const SoundManager = {
             }).catch(e => console.error("Error playing music:", e));
         }
     },
-    pauseMusic: function() {
+    pauseMusic: function () {
         if (this.isMusicPlaying) {
             this.music.pause();
             this.isMusicPlaying = false;
         }
     },
-    toggleMusic: function() {
+    toggleMusic: function () {
         if (this.isMusicPlaying) {
             this.pauseMusic();
         } else {
@@ -78,6 +78,39 @@ document.body.addEventListener('pointerdown', () => {
 
 const DICE_EMOJIS = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 const HIGH_SCORE_KEY = 'diceGameHighScore';
+
+const COLORS = {
+    pastelPink: 0xFFD1DC,
+    pastelBlue: 0xAEC6CF,
+    pastelYellow: 0xFDFD96,
+    pastelCream: 0xFDF5E6,
+    deepBrown: 0x5D4037,
+    popBlue: 0x4FC3F7,
+    popPink: 0xF06292,
+    popGold: 0xFFD700,
+    popPurple: 0xAB47BC,
+    white: 0xFFFFFF,
+    black: 0x000000,
+    // Luck Cats Palette
+    creamBg: 0xFFFBE6,
+    headerPink: 0xFFC0CB,
+    statsBlue: 0xB2EBF2,
+    progressYellow: 0xFFE082,
+    btnGreen: 0xA5D6A7,
+    btnRed: 0xEF9A9A,
+    cardsPink: 0xFFCDD2,
+    textBrown: 0x5D4037,
+    // Phase 5 Palette
+    gameDot: 0xF0E6D2,
+    gameTitle: 0xFF9F7A,
+    gameBrown: 0x8B5A3C,
+    gameBrownDark: 0x5D3A24,
+    gameCardBg: 0xFDF5E6,
+    gameBorderBlue: 0xAED6F1,
+    gameTealStart: 0x7DD1B6,
+    gameTealEnd: 0x4FB89D,
+    gameTealShadow: 0x3B8C78
+};
 
 // --- Game Structure Constants ---
 const STARTING_ROLLS = 6;
@@ -240,8 +273,15 @@ class PreloadScene extends Phaser.Scene {
         this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'Carregando...', { fontSize: '32px', color: '#ffffff' }).setOrigin(0.5);
         this.load.image('jubijujuba', 'assets/jubijujuba.jpg');
         this.load.image('fundo', 'assets/fundo.jpg');
+        this.load.image('fundo_fase', 'tela/fase/background.png');
+        this.load.image('fundo_loja', 'tela/shop/background.png');
+        this.load.image('btn_proxima', 'tela/shop/proxima.png');
+        this.load.image('menu_full', 'assets/menu_full.png');
+        this.load.image('gato_meta', 'tela/meta/gatinho.png');
+        this.load.image('patinha_meta', 'tela/meta/patinha.png');
+        this.load.image('btn_baralho', 'tela/fase/baralho.png');
         this.load.audio('gamemusic', 'assets/gamemusic.mp3');
-        
+
         // Load card images
         for (const card of Object.values(CARD_DEFINITIONS)) {
             if (card.image) {
@@ -265,30 +305,18 @@ class MainMenuScene extends Phaser.Scene {
 
     constructor() { super('MainMenuScene'); }
     create() {
-        const centerX = this.cameras.main.width / 2;
-        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
-        const catImage = this.add.image(centerX, 560, 'jubijujuba').setOrigin(0.5);
-        catImage.setScale(0.5);
-        this.tweens.add({
-            targets: catImage,
-            alpha: { from: 0, to: 1 },
-            duration: 1500,
-            ease: 'Sine.easeInOut'
-        });
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
 
-        this.add.text(centerX, 150, 'Jogo dos Dados', { fontSize: '48px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        this.add.text(centerX, 220, 'Chegue a 10.000 pontos para vencer!', { fontSize: '18px', color: '#c7d2fe', align: 'center', wordWrap: {width: 380} }).setOrigin(0.5);
-        
-        const highScore = this.registry.get('highScore');
-        if (highScore > 0) {
-            this.add.text(centerX, 260, `Seu Recorde: ${highScore}`, { fontSize: '20px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
-        }
+        // Background (The full design image)
+        this.add.image(centerX, height / 2, 'menu_full').setDisplaySize(width, height);
 
-        const startButton = this.add.text(centerX, 350, 'Começar a Jogar', { fontSize: '28px', color: '#ffffff', backgroundColor: '#4f46e5', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        
-        startButton.on('pointerover', () => startButton.setBackgroundColor('#6366f1'));
-        startButton.on('pointerout', () => startButton.setBackgroundColor('#4f46e5'));
-        startButton.on('pointerdown', () => {
+        // --- Interactive Play Button ---
+        // Coordinates estimated from the provided image (pill shape)
+        const playBtnArea = this.add.rectangle(centerX, 475, 300, 85, 0xffffff, 0);
+        playBtnArea.setInteractive({ useHandCursor: true });
+
+        playBtnArea.on('pointerdown', () => {
             SoundManager.play('click');
             this.registry.set('totalScore', 0);
             this.registry.set('currentPhase', 1);
@@ -300,10 +328,71 @@ class MainMenuScene extends Phaser.Scene {
             this.scene.start('PhaseIntroScene');
         });
 
-        const musicButton = this.add.text(centerX, 650, 'Música: ON', { fontSize: '20px', color: '#ffffff', backgroundColor: '#4f46e5', padding: { x: 10, y: 5 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        musicButton.on('pointerdown', () => {
+        // Effect on hover
+        playBtnArea.on('pointerover', () => {
+            this.tweens.add({ targets: playBtnArea, scale: 1.05, duration: 100 });
+        });
+        playBtnArea.on('pointerout', () => {
+            this.tweens.add({ targets: playBtnArea, scale: 1, duration: 100 });
+        });
+
+        // --- Music Toggle Section ---
+        const musicY = 550;
+        const musicToggleArea = this.add.rectangle(centerX, musicY, 230, 50, 0xffffff, 0);
+        musicToggleArea.setInteractive({ useHandCursor: true });
+
+        // Visual indicator for ON/OFF
+        const toggleIndicator = this.add.circle(SoundManager.isMusicPlaying ? centerX + -40 : centerX - -40, musicY, 15, 0xffffff);
+        toggleIndicator.setStrokeStyle(2, 0x5D4037, 0.5);
+
+        musicToggleArea.on('pointerdown', () => {
             SoundManager.toggleMusic();
-            musicButton.setText(`Música: ${SoundManager.isMusicPlaying ? 'ON' : 'OFF'}`);
+            SoundManager.play('click');
+
+            // Animate toggle
+            this.tweens.add({
+                targets: toggleIndicator,
+                x: SoundManager.isMusicPlaying ? centerX + 35 : centerX - 35,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+        });
+
+        // --- Record Banner Section ---
+        const recordY = 640; // Adjusted to fit the blank banner area
+        const highScore = this.registry.get('highScore');
+
+        // Always show the record area with the actual player score
+        const recordText = this.add.text(centerX + 15, recordY, ` Recorde: ${highScore} Pontos`, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '18px',
+            color: '#8B4513'
+        }).setOrigin(0.5);
+
+        // Add a small pulsing effect to the record icon part
+        const crownIcon = this.add.text(centerX - 120, recordY, '', { fontSize: '24px' }).setOrigin(0.5);
+        this.tweens.add({
+            targets: crownIcon,
+            scale: 1.1,
+            duration: 800,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // --- Goal Message Section (Blinking) ---
+        const goalMessage = this.add.text(centerX, 480, 'Chegue a 10.000 pontos para vencer!', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '14px',
+            color: '#8B4513'
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: goalMessage,
+            alpha: 0,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Cubic.easeInOut'
         });
     }
 }
@@ -318,59 +407,175 @@ class PhaseIntroScene extends Phaser.Scene {
     constructor() { super('PhaseIntroScene'); }
 
     create() {
-        const centerX = this.cameras.main.width / 2;
-        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // --- Background Section ---
+        // Base background image loaded previously
+        this.add.image(centerX, height / 2, 'fundo').setDisplaySize(width, height);
+
+        // Polka dot pattern overlay
+        const dots = this.add.graphics();
+        dots.fillStyle(COLORS.gameDot || 0xF0E6D2, 0.4);
+        for (let x = 0; x < width; x += 40) {
+            for (let y = 0; y < height; y += 40) {
+                dots.fillCircle(x, y, 2);
+                dots.fillCircle(x + 20, y + 20, 2);
+            }
+        }
+
         const phase = this.registry.get('currentPhase');
         const goal = getGoalForPhase(phase);
         const previousGoal = getGoalForPhase(phase - 1);
-        
+
         this.registry.set('stageGoal', goal);
         this.registry.set('previousGoal', previousGoal);
         this.registry.set('cartonBoxUsedThisPhase', false);
-        
-        let condition: PhaseCondition = 'NONE';
 
-        // Bonus Phases (cycle: SAFE_ROLL -> LUCKY_SEVEN -> DOUBLE_POINTS)
+        let condition: PhaseCondition = 'NONE';
         if ([5, 17, 29].includes(phase)) condition = 'SAFE_ROLL';
         if ([9, 21, 33].includes(phase)) condition = 'LUCKY_SEVEN';
         if ([13, 25].includes(phase)) condition = 'DOUBLE_POINTS';
-        
-        // Curse Phases (cycle: HALF_POINTS -> DOUBLE_PENALTY -> PRECISE_OR_NOTHING)
         if ([4, 16, 28].includes(phase)) condition = 'HALF_POINTS';
         if ([8, 20, 32].includes(phase)) condition = 'DOUBLE_PENALTY';
-        if ([12, 24].includes(phase)) condition = 'PRECISE_OR_NOTHING';
+        if ([12, 24, 35].includes(phase)) condition = 'PRECISE_OR_NOTHING';
 
-        // Final Phase
-        if (phase === 35) {
-            condition = 'PRECISE_OR_NOTHING';
-        }
-        
         this.registry.set('currentCondition', condition);
 
-        if (phase === 35) {
-            this.add.text(centerX, 150, `Fase Final`, { fontSize: '56px', color: '#f87171', fontStyle: 'bold' }).setOrigin(0.5);
-            this.add.text(centerX, 230, `Meta: ${goal} Pontos`, { fontSize: '28px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
-            this.add.text(centerX, 270, 'Vença para zerar o jogo!', { fontSize: '22px', color: '#e0e7ff' }).setOrigin(0.5);
+        // --- Title Section ---
+        const titleText = phase === 35 ? 'Fase Final' : `Fase ${phase}`;
+        const titleShadow = this.add.text(centerX, 126, titleText, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '64px',
+            color: '#F0D0B6'
+        }).setOrigin(0.5);
+
+        const titleMain = this.add.text(centerX, 120, titleText, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '64px',
+            color: '#FF9F7A',
+            stroke: '#ffffff',
+            strokeThickness: 12
+        }).setOrigin(0.5);
+
+        // --- Main Game Card ---
+        const cardWidth = 320;
+        const cardHeight = 360;
+        const cardY = 380;
+
+        // Card Border/Shadow
+        const cardBg = this.add.graphics();
+        cardBg.fillStyle(0x000000, 0.1);
+        cardBg.fillRoundedRect(centerX - cardWidth / 2 + 5, cardY - cardHeight / 2 + 5, cardWidth, cardHeight, 25);
+
+        cardBg.lineStyle(4, COLORS.textBrown || 0x8B5A3C, 1);
+        cardBg.fillStyle(0xffffff, 1);
+        cardBg.fillRoundedRect(centerX - cardWidth / 2, cardY - cardHeight / 2, cardWidth, cardHeight, 25);
+        cardBg.strokeRoundedRect(centerX - cardWidth / 2, cardY - cardHeight / 2, cardWidth, cardHeight, 25);
+
+        // Card Header (Stats/Goal)
+        const headerHeight = 70;
+        const cardHeader = this.add.graphics();
+        cardHeader.fillStyle(COLORS.pastelCream || 0xFDF5E6, 1);
+        cardHeader.fillRoundedRect(centerX - cardWidth / 2, cardY - cardHeight / 2, cardWidth, headerHeight, { tl: 25, tr: 25, bl: 0, br: 0 });
+        cardHeader.lineStyle(2, 0xAED6F1, 1);
+        cardHeader.moveTo(centerX - cardWidth / 2, cardY - cardHeight / 2 + headerHeight);
+        cardHeader.lineTo(centerX + cardWidth / 2, cardY - cardHeight / 2 + headerHeight);
+        cardHeader.strokePath();
+
+        // Cat Avatar placeholder
+        this.add.image(centerX - cardWidth / 2 + 40, cardY - cardHeight / 2 + headerHeight / 2, 'gato_meta').setDisplaySize(60, 60);
+
+        this.add.text(centerX + 60, cardY - cardHeight / 2 + 25, 'META DA FASE', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '12px',
+            color: '#8B5A3C'
+        }).setOrigin(0.5);
+
+        this.add.text(centerX + 60, cardY - cardHeight / 2 + 48, `${goal} Pontos`, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '22px',
+            color: '#5D3A24'
+        }).setOrigin(0.5);
+
+        // Card Body: Bonus Info
+        const glow = this.add.graphics();
+        glow.fillGradientStyle(0xFFDF00, 0xFFDF00, 0xFFDF00, 0xFFDF00, 0.3, 0.3, 0, 0);
+        glow.fillCircle(centerX, cardY + 20, 80);
+        glow.setAlpha(0.4);
+
+        if (condition === 'NONE') {
+            this.add.image(centerX, cardY + 10, 'patinha_meta').setDisplaySize(120, 120);
         } else {
-            this.add.text(centerX, 150, `Fase ${phase}`, { fontSize: '56px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-            this.add.text(centerX, 230, `Meta: ${goal} Pontos`, { fontSize: '28px', color: '#e0e7ff' }).setOrigin(0.5);
+            this.add.text(centerX, cardY + 10,
+                BONUS_CONDITIONS.includes(condition as any) ? '🌟' : '💀', {
+                fontSize: '100px'
+            }).setOrigin(0.5);
         }
 
-        if (condition !== 'NONE') {
-            const conditionText = CONDITION_DESCRIPTIONS[condition];
-            const color = BONUS_CONDITIONS.includes(condition as BonusCondition) ? '#34d399' : '#f87171';
-            this.add.text(centerX, 380, conditionText, { fontSize: '22px', color, fontStyle: 'italic', align: 'center', wordWrap: { width: 350 } }).setOrigin(0.5);
-        } else {
-             this.add.text(centerX, 380, 'Fase Neutra', { fontSize: '22px', color: '#9ca3af', fontStyle: 'italic' }).setOrigin(0.5);
-        }
+        const conditionName = condition === 'NONE' ? 'Fase Neutra' : 'Bônus';
+        this.add.text(centerX, cardY + 90, conditionName, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '24px',
+            color: '#8B5A3C'
+        }).setOrigin(0.5);
 
-        const startButton = this.add.text(centerX, 550, 'Começar Fase', { fontSize: '32px', color: '#ffffff', backgroundColor: '#16a34a', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        
-        startButton.on('pointerover', () => startButton.setBackgroundColor('#22c55e'));
-        startButton.on('pointerout', () => startButton.setBackgroundColor('#16a34a'));
-        startButton.on('pointerdown', () => {
+        const conditionDesc = condition === 'NONE' ? 'Nenhuma condição especial.' : CONDITION_DESCRIPTIONS[condition];
+        this.add.text(centerX, cardY + 120, conditionDesc, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '14px',
+            color: '#5D3A24',
+            align: 'center',
+            wordWrap: { width: 260 }
+        }).setOrigin(0.5);
+
+        // --- Action Area ---
+        const btnY = height - 100;
+        const btnWidth = 240;
+        const btnHeight = 60;
+
+        const btnContainer = this.add.container(centerX, btnY);
+
+        const btnShadow = this.add.graphics();
+        btnShadow.fillStyle(0x3B8C78, 1);
+        btnShadow.fillRoundedRect(-btnWidth / 2, -btnHeight / 2 + 8, btnWidth, btnHeight, 30);
+
+        const btnMain = this.add.graphics();
+        btnMain.fillGradientStyle(0x7DD1B6, 0x7DD1B6, 0x4FB89D, 0x4FB89D, 1);
+        btnMain.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 30);
+
+        const btnText = this.add.text(0, 0, 'Começar Fase', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '24px',
+            color: '#ffffff',
+            stroke: '#2E8B57',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+
+        btnContainer.add([btnShadow, btnMain, btnText]);
+        btnContainer.setSize(btnWidth, btnHeight).setInteractive({ useHandCursor: true });
+
+        btnContainer.on('pointerdown', () => {
             SoundManager.play('click');
-            this.scene.start('MainGameScene');
+            btnMain.y = 4;
+            btnText.y = 4;
+            this.time.delayedCall(100, () => {
+                this.scene.start('MainGameScene');
+            });
+        });
+
+        // Floating stars effect
+        const star1 = this.add.text(70, btnY - 50, '⭐', { fontSize: '32px' }).setAlpha(0.6);
+        const star2 = this.add.text(width - 70, btnY - 70, '✨', { fontSize: '24px' }).setAlpha(0.6);
+
+        this.tweens.add({
+            targets: [star1, star2],
+            y: '-=10',
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
         });
     }
 }
@@ -393,8 +598,9 @@ class MainGameScene extends Phaser.Scene {
     choiceUiGroup!: Phaser.GameObjects.Group;
     cardUiGroup!: Phaser.GameObjects.Group;
     isRolling!: boolean;
+    dice3Value!: number;
     currentHand: Card[] = [];
-    
+
     initialRoundContext!: RoundContext;
     currentRoundContext!: RoundContext;
     playedCardsThisRound: Card[] = [];
@@ -415,8 +621,14 @@ class MainGameScene extends Phaser.Scene {
     goalText!: Phaser.GameObjects.Text;
     totalScoreText!: Phaser.GameObjects.Text;
     conditionText!: Phaser.GameObjects.Text;
-    progressBar!: Phaser.GameObjects.Graphics;
+    progressBarFill!: Phaser.GameObjects.Graphics;
+    progressBarTrack!: Phaser.GameObjects.Graphics;
+    progressPercentageText!: Phaser.GameObjects.Text;
+    catTargetIcon!: Phaser.GameObjects.Image;
     deckText!: Phaser.GameObjects.Text;
+    isChoiceActive = false;
+    teamCardsGroup!: Phaser.GameObjects.Group;
+    tooltipGroup!: Phaser.GameObjects.Group;
 
     // FIX: Declare Phaser properties to resolve TypeScript errors.
     add!: Phaser.GameObjects.GameObjectFactory;
@@ -444,76 +656,164 @@ class MainGameScene extends Phaser.Scene {
     }
 
     create() {
-        const centerX = this.cameras.main.width / 2;
-        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+
+        // Background - Using the new fase background
+        this.add.image(centerX, height / 2, 'fundo_fase').setDisplaySize(width, height);
+
         this.choiceUiGroup = this.add.group();
         this.cardUiGroup = this.add.group();
         this.deckViewerGroup = this.add.group();
         this.relicsDisplayGroup = this.add.group();
+        this.teamCardsGroup = this.add.group();
+        this.tooltipGroup = this.add.group();
         this.modalGroup = this.add.group();
         this.deckViewerGroup.setVisible(false);
         this.modalGroup.setVisible(false);
-        
+
         this.createUI();
         this.startNewRoll();
     }
-    
-    createUI() {
-        const centerX = this.cameras.main.width / 2;
-        const phase = this.registry.get('currentPhase');
-        const totalRollsLeft = this.registry.get('totalRollsLeft');
-        const goal = this.registry.get('stageGoal');
-        const totalScore = this.registry.get('totalScore');
-        const condition = this.registry.get('currentCondition') as PhaseCondition;
-        const deck: Card[] = this.registry.get('playerDeck');
 
-        const headerStyle = { fontSize: '24px', color: '#e5e7eb', fontStyle: 'bold' };
-        
-        this.phaseText = this.add.text(20, 20, phase === 35 ? 'Fase Final' : `Fase: ${phase}`, headerStyle);
-        this.rollsText = this.add.text(this.cameras.main.width - 20, 20, `Lançamentos: ${totalRollsLeft}`, headerStyle).setOrigin(1, 0);
-        
-        this.add.text(20, 60, 'Pontuação Total:', {fontSize: '20px', color: '#d1d5db'});
-        this.totalScoreText = this.add.text(220, 60, `${totalScore}`, {fontSize: '20px', color: '#fcd34d', fontStyle: 'bold'});
-        this.deckText = this.add.text(20, 90, `Cartas no Baralho: ${deck.length}`, { fontSize: '16px', color: '#9ca3af' });
-        
-        // Deck Viewer Button
-        const deckButton = this.add.text(this.cameras.main.width - 20, 90, 'Ver Baralho', { fontSize: '16px', color: '#c7d2fe', backgroundColor: '#374151', padding: { x: 8, y: 4 } }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
-        deckButton.on('pointerdown', () => {
-             if (this.isModalOpen) this.closeDeckViewer(); else this.openDeckViewer();
+    createUI() {
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+
+        // --- Header Section ---
+        const headerTop = this.add.graphics();
+        headerTop.fillStyle(COLORS.headerPink, 1);
+        headerTop.fillRoundedRect(0, -20, width, 140, { tl: 0, tr: 0, bl: 40, br: 40 });
+        headerTop.depth = 10;
+
+        const phase = this.registry.get('currentPhase');
+        this.phaseText = this.add.text(centerX, 45, `🐾 Fase ${phase}: Gatos Sortudos 🐾`, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '22px',
+            color: '#5D4037'
+        }).setOrigin(0.5).setDepth(11);
+
+        // Stats Pill
+        const pillWidth = 260;
+        const pillHeight = 40;
+        const pillY = 95;
+
+        const statsPillBg = this.add.graphics();
+        statsPillBg.fillStyle(0xffffff, 0.5);
+        statsPillBg.fillRoundedRect(centerX - pillWidth / 2, pillY - pillHeight / 2, pillWidth, pillHeight, 20);
+        statsPillBg.lineStyle(2, 0xffffff, 0.8);
+        statsPillBg.strokeRoundedRect(centerX - pillWidth / 2, pillY - pillHeight / 2, pillWidth, pillHeight, 20);
+        statsPillBg.depth = 11;
+
+        const statsContainer = this.add.container(centerX, pillY).setDepth(12);
+        this.rollsText = this.add.text(-60, 0, 'Rolagens: 0', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '14px',
+            color: '#5D4037'
+        }).setOrigin(0.5);
+
+        const divider = this.add.rectangle(0, 0, 1, 15, 0x5D4037, 0.3);
+
+        this.totalScoreText = this.add.text(70, 0, '0 / 10.000', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '14px',
+            color: '#5D4037'
+        }).setOrigin(0.5);
+
+        statsContainer.add([this.rollsText, divider, this.totalScoreText]);
+
+        // --- Progress Section ---
+        const progressY = 175;
+        const barWidth = 300;
+        const barHeight = 32;
+
+        this.progressBarTrack = this.add.graphics();
+        this.progressBarTrack.fillStyle(COLORS.statsBlue, 1);
+        this.progressBarTrack.fillRoundedRect(centerX - barWidth / 2, progressY - barHeight / 2, barWidth, barHeight, 16);
+        this.progressBarTrack.lineStyle(4, 0xffffff, 1);
+        this.progressBarTrack.strokeRoundedRect(centerX - barWidth / 2, progressY - barHeight / 2, barWidth, barHeight, 16);
+
+        this.progressBarFill = this.add.graphics();
+        this.progressBarFill.setDepth(1);
+
+        this.progressPercentageText = this.add.text(centerX, progressY, '0%', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '12px',
+            color: '#5D4037'
+        }).setOrigin(0.5).setDepth(2);
+
+        this.catTargetIcon = this.add.image(centerX + barWidth / 2 + 5, progressY, 'gato_meta').setDisplaySize(40, 40).setDepth(3);
+
+        this.goalText = this.add.text(centerX, progressY + 30, 'Meta do Estágio: 0 Pontos', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '12px',
+            color: '#5D4037'
+        }).setOrigin(0.5).setAlpha(0.7);
+
+        // --- Dice Section (Visual Placement) ---
+        const diceY = 280;
+        this.dice1Text = this.add.text(centerX - 80, diceY + 20, '⚀', { fontSize: '96px', color: '#000000' }).setOrigin(0.5).setAngle(-15).setVisible(false);
+        this.dice2Text = this.add.text(centerX + 80, diceY + 20, '⚀', { fontSize: '96px', color: '#000000' }).setOrigin(0.5).setAngle(15).setVisible(false);
+
+        // --- Control Section (Buttons) ---
+        const controlY = 440;
+        const addBtn = this.add.container(centerX - 80, controlY);
+        const addBg = this.add.circle(0, 0, 40, COLORS.btnGreen).setStrokeStyle(4, 0xffffff);
+        const addLabel = this.add.text(0, -5, '+', { fontFamily: '"Fredoka One"', fontSize: '40px', color: '#ffffff' }).setOrigin(0.5);
+        const addTextShort = this.add.text(0, 50, 'Adicionar', { fontFamily: '"Fredoka One"', fontSize: '14px', color: '#166534' }).setOrigin(0.5);
+        addBtn.add([addBg, addLabel, addTextShort]);
+        addBtn.setSize(80, 80).setInteractive({ useHandCursor: true });
+        addBtn.on('pointerdown', () => this.handleChoice('add'));
+
+        const subBtn = this.add.container(centerX + 80, controlY);
+        const subBg = this.add.circle(0, 0, 40, COLORS.btnRed).setStrokeStyle(4, 0xffffff);
+        const subLabel = this.add.text(0, -5, '-', { fontFamily: '"Fredoka One"', fontSize: '40px', color: '#ffffff' }).setOrigin(0.5);
+        const subTextShort = this.add.text(0, 50, 'Subtrair', { fontFamily: '"Fredoka One"', fontSize: '14px', color: '#991b1b' }).setOrigin(0.5);
+        subBtn.add([subBg, subLabel, subTextShort]);
+        subBtn.setSize(80, 80).setInteractive({ useHandCursor: true });
+        subBtn.on('pointerdown', () => this.handleChoice('subtract'));
+
+        this.choiceUiGroup.add(addBtn);
+        this.choiceUiGroup.add(subBtn);
+        this.choiceUiGroup.getChildren().forEach(c => (c as any).setVisible?.(false));
+
+        // --- Team Section (Cards at bottom) ---
+        const teamY = 580;
+        const teamBgSection = this.add.graphics();
+        teamBgSection.fillStyle(COLORS.cardsPink, 1);
+        teamBgSection.fillRoundedRect(-20, teamY - 20, width + 40, 150, { tl: 30, tr: 30, bl: 0, br: 0 });
+        this.add.text(centerX, teamY, 'Seu Time', { fontFamily: '"Fredoka One"', fontSize: '16px', color: '#9f1239' }).setOrigin(0.5);
+
+        // --- Deck Button ---
+        const deckBtn = this.add.container(width - 50, height - 50);
+        const deckImg = this.add.image(0, 0, 'btn_baralho').setDisplaySize(55, 40);
+
+        deckBtn.add([deckImg]);
+        deckBtn.setSize(55, 40).setInteractive({ useHandCursor: true });
+        deckBtn.setDepth(15);
+        deckBtn.on('pointerdown', () => {
+            SoundManager.play('click');
+            this.openDeckViewer();
         });
 
-        // Progress Bar
-        this.add.text(centerX, 90, 'Progresso da Fase', { fontSize: '20px', color: '#d1d5db'}).setOrigin(0.5);
-        this.goalText = this.add.text(centerX, 120, `${totalScore} / ${goal}`, { fontSize: '28px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        const progressBox = this.add.graphics();
-        progressBox.fillStyle(0x374151, 1); // bg-gray-700
-        progressBox.fillRect(50, 150, 300, 20);
-        this.progressBar = this.add.graphics();
-        this.updateProgressBar();
-
-        // Bottom Condition Text
-        if (condition !== 'NONE') {
-            const color = BONUS_CONDITIONS.includes(condition as BonusCondition) ? '#34d399' : '#f87171';
-            this.conditionText = this.add.text(centerX, 680, CONDITION_DESCRIPTIONS[condition], { fontSize: '18px', color, fontStyle: 'italic' }).setOrigin(0.5);
-        }
-
-        this.updateRelicsUI();
+        this.updateUI();
     }
-    
+
     updateRelicsUI() {
         this.relicsDisplayGroup.clear(true, true);
         const relics: Relic[] = this.registry.get('playerRelics') || [];
         if (relics.length === 0) return;
 
-        const startX = 20;
-        const startY = 650;
-        const relicStyle = { fontSize: '24px' };
-        
+        const { width, height } = this.cameras.main;
+        const startX = 30;
+        const startY = 675; // Near the bottom edge
+        const relicStyle = { fontSize: '20px' };
+
         relics.forEach((relic, index) => {
-            const relicEmoji = this.add.text(startX + (index * 30), startY, relic.emoji, relicStyle).setInteractive({ useHandCursor: true });
-            
+            const relicEmoji = this.add.text(startX + (index * 35), startY, relic.emoji, relicStyle).setInteractive({ useHandCursor: true }).setDepth(20);
+
             relicEmoji.on('pointerdown', () => {
-                if(this.isModalOpen) return;
+                if (this.isModalOpen) return;
                 SoundManager.play('click');
                 this.showInfoModal(relic);
             });
@@ -523,57 +823,145 @@ class MainGameScene extends Phaser.Scene {
     }
 
     updateUI() {
-        const totalScore = this.registry.get('totalScore');
-        const deck: Card[] = this.registry.get('playerDeck');
-        this.rollsText.setText(`Lançamentos: ${this.registry.get('totalRollsLeft')}`);
-        this.totalScoreText.setText(`${totalScore}`);
-        this.goalText.setText(`${totalScore} / ${this.registry.get('stageGoal')}`);
-        this.deckText.setText(`Cartas no Baralho: ${deck.length}`);
+        const currentScore = this.registry.get('totalScore');
+        const goal = this.registry.get('stageGoal');
+        const rollsLeft = this.registry.get('totalRollsLeft');
+        const phase = this.registry.get('currentPhase');
+
+        if (this.rollsText) this.rollsText.setText(`Rolagens: ${rollsLeft}`);
+        if (this.totalScoreText) this.totalScoreText.setText(`${currentScore} / ${goal}`);
+        if (this.goalText) this.goalText.setText(`Meta do Estágio: ${goal} Pontos`);
+
         this.updateProgressBar();
+        this.updateTeamUI();
+    }
+
+    updateTeamUI() {
+        if (!this.teamCardsGroup) return;
+        this.teamCardsGroup.clear(true, true);
+        const deck: Card[] = this.registry.get('playerDeck') || [];
+        const { width } = this.cameras.main;
+        const teamY = 600;
+
+        const cardWidth = 75;
+        const cardHeight = 105;
+        const spacing = 12;
+
+        // Align to the left to avoid button on the right
+        const startX = 35;
+
+        deck.forEach((card, index) => {
+            const x = startX + index * (cardWidth + spacing) + cardWidth / 2;
+            const cardImg = this.add.container(x, teamY + 45);
+
+            const bg = this.add.graphics();
+            bg.fillStyle(0xffffff, 1);
+            bg.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 10);
+            bg.lineStyle(2, 0x000000, 0.2);
+            bg.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 10);
+
+            let icon;
+            if (card.image && this.textures.exists(card.id)) {
+                icon = this.add.image(0, 0, card.id).setDisplaySize(cardWidth * 0.85, cardWidth * 0.85);
+            } else {
+                icon = this.add.text(0, 0, card.emoji, { fontSize: '36px' }).setOrigin(0.5);
+            }
+
+            cardImg.add([bg, icon]);
+            cardImg.setSize(cardWidth, cardHeight);
+            cardImg.setInteractive({ useHandCursor: true });
+
+            cardImg.on('pointerdown', () => {
+                this.hideCardTooltip();
+                this.showInfoModal(card);
+            });
+
+            cardImg.on('pointerover', () => this.showCardTooltip(x, teamY - 10, card));
+            cardImg.on('pointerout', () => this.hideCardTooltip());
+
+            this.teamCardsGroup.add(cardImg);
+        });
+    }
+
+    showCardTooltip(x: number, y: number, card: Card | Relic) {
+        this.hideCardTooltip();
+        const tooltipBg = this.add.graphics();
+        tooltipBg.fillStyle(0x000000, 0.85);
+
+        const padding = 10;
+        const textStyle = { fontFamily: 'Nunito', fontSize: '12px', color: '#ffffff', wordWrap: { width: 180 } };
+        const nameText = this.add.text(0, 0, card.name, { ...textStyle, fontStyle: 'bold', color: '#ffcf33' }).setOrigin(0.5);
+        const descText = this.add.text(0, 20, card.description, textStyle).setOrigin(0.5);
+
+        const width = Math.max(nameText.width, descText.width) + padding * 2;
+        const height = nameText.height + descText.height + padding * 3;
+
+        tooltipBg.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
+        tooltipBg.lineStyle(1, 0xffffff, 0.3).strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
+
+        const container = this.add.container(x, y - height / 2);
+        container.add([tooltipBg, nameText, descText]);
+        container.setDepth(100);
+        this.tooltipGroup.add(container);
+    }
+
+    hideCardTooltip() {
+        this.tooltipGroup.clear(true, true);
     }
 
     updateProgressBar() {
-        const totalScore = this.registry.get('totalScore');
+        const currentScore = this.registry.get('totalScore');
         const goal = this.registry.get('stageGoal');
         const previousGoal = this.registry.get('previousGoal');
 
-        const pointsInStage = totalScore - previousGoal;
-        const pointsNeededForStage = goal - previousGoal;
-        const progress = pointsNeededForStage > 0 ? Math.max(0, pointsInStage / pointsNeededForStage) : 1;
-        
-        this.progressBar.clear();
-        this.progressBar.fillStyle(0x34d399, 1); // green-400
-        this.progressBar.fillRect(50, 150, 300 * Math.min(1, progress), 20);
+        let progress = (currentScore - previousGoal) / (goal - previousGoal);
+        progress = Phaser.Math.Clamp(progress, 0, 1);
+
+        const barWidth = 300;
+        const barHeight = 32;
+        const centerX = this.cameras.main.width / 2;
+        const progressY = 175;
+
+        if (this.progressBarFill) {
+            this.progressBarFill.clear();
+            this.progressBarFill.fillStyle(COLORS.progressYellow, 1);
+            if (progress > 0) {
+                this.progressBarFill.fillRoundedRect(centerX - barWidth / 2 + 4, progressY - barHeight / 2 + 4, (barWidth - 8) * progress, barHeight - 8, 12);
+            }
+        }
+
+        if (this.progressPercentageText) {
+            this.progressPercentageText.setText(`${Math.floor(progress * 100)}%`);
+        }
     }
 
     startNewRoll(isReroll = false) {
         if (this.isRolling || this.isModalOpen) return;
         this.isRolling = true;
-        this.choiceUiGroup.clear(true, true);
+        if (!isReroll) {
+            this.pawRerollUsedThisTurn = false;
+        }
+
+        // Hide choice buttons instead of clearing the group
+        this.choiceUiGroup.getChildren().forEach(c => (c as any).setVisible?.(false));
         this.cardUiGroup.clear(true, true);
         this.children.list.filter(c => c.getData('isCardUI')).forEach(c => c.destroy());
         this.playedCardsThisRound = [];
         this.firstMochiPlayedThisTurn = false;
-        if (!isReroll) {
-            this.pawRerollUsedThisTurn = false;
-        }
-        
-        if(!isReroll) this.registry.set('totalRollsLeft', this.registry.get('totalRollsLeft') - 1);
+        this.isChoiceActive = false;
+
+        if (!isReroll) this.registry.set('totalRollsLeft', this.registry.get('totalRollsLeft') - 1);
         this.updateUI();
 
         this.dice1Value = Phaser.Math.Between(1, 6);
         this.dice2Value = Phaser.Math.Between(1, 6);
-        
+
         if (this.hasRelic('cosmic_whisker')) {
             this.dice1Value = 6;
         }
 
-        const centerX = this.cameras.main.width / 2;
-        const diceTextStyle = { fontSize: '96px', color: '#ffffff', fontStyle: 'bold' };
-
-        this.dice1Text = this.add.text(centerX - 80, 300, DICE_EMOJIS[this.dice1Value - 1], diceTextStyle).setOrigin(0.5);
-        this.dice2Text = this.add.text(centerX + 80, 300, DICE_EMOJIS[this.dice2Value - 1], diceTextStyle).setOrigin(0.5);
-        this.add.text(centerX, 300, '+', { fontSize: '64px', color: '#9ca3af' }).setOrigin(0.5);
+        this.dice1Text.setVisible(true).setText(DICE_EMOJIS[this.dice1Value - 1]);
+        this.dice2Text.setVisible(true).setText(DICE_EMOJIS[this.dice2Value - 1]);
 
         this.rollAnimation();
     }
@@ -594,66 +982,105 @@ class MainGameScene extends Phaser.Scene {
             }
         });
     }
-    
+
     showChoiceUI() {
-        const centerX = this.cameras.main.width / 2;
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
         const preliminarySum = this.dice1Value + this.dice2Value;
-        const sumText = this.add.text(centerX, 420, `Soma prévia: ${preliminarySum}`, { fontSize: '28px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
-        const instruction = this.add.text(centerX, 460, 'Somar ou Subtrair o próximo dado?', { fontSize: '22px', color: '#e0e7ff', align: 'center', wordWrap: {width: 380} }).setOrigin(0.5);
-        const addButton = this.add.text(centerX, 520, 'Somar (+)', { fontSize: '28px', color: '#ffffff', backgroundColor: '#16a34a', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        const subtractButton = this.add.text(centerX, 580, 'Subtrair (-)', { fontSize: '28px', color: '#ffffff', backgroundColor: '#dc2626', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        const sumText = this.add.text(centerX, 230, `Soma: ${preliminarySum}`, {
+            fontFamily: '"Fredoka One"',
+            fontSize: '24px',
+            color: '#5D4037'
+        }).setOrigin(0.5);
+
+        const instruction = this.add.text(centerX, 260, 'Somar ou Subtrair o próximo dado?', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '16px',
+            color: '#5D4037',
+            align: 'center',
+            wordWrap: { width: 300 }
+        }).setOrigin(0.5);
 
         if (this.hasRelic('lucky_paw') && !this.pawRerollUsedThisTurn) {
-            const rerollButton = this.add.text(centerX, 370, 'Rolar de Novo 🐾', { fontSize: '20px', color: '#ffffff', backgroundColor: '#4f46e5', padding: { x: 10, y: 5 }}).setOrigin(0.5).setInteractive({ useHandCursor: true });
-            this.choiceUiGroup.add(rerollButton);
+            const rerollBtn = this.add.container(centerX, 200);
+            const rerollBg = this.add.graphics();
+            rerollBg.fillStyle(0x4f46e5, 1);
+            rerollBg.fillRoundedRect(-80, -15, 160, 30, 15);
+            const rerollText = this.add.text(0, 0, 'Rolar de Novo 🐾', {
+                fontFamily: '"Fredoka One"',
+                fontSize: '14px',
+                color: '#ffffff'
+            }).setOrigin(0.5);
+            rerollBtn.add([rerollBg, rerollText]);
+            rerollBtn.setSize(160, 30).setInteractive({ useHandCursor: true });
 
-            rerollButton.on('pointerdown', () => {
+            rerollBtn.on('pointerdown', () => {
                 if (this.isModalOpen) return;
                 SoundManager.play('click');
                 this.pawRerollUsedThisTurn = true;
-                this.choiceUiGroup.clear(true, true);
-                this.dice1Text.destroy();
-                this.dice2Text.destroy();
-                this.children.list.find(c => c.type === 'Text' && (c as Phaser.GameObjects.Text).text === '+')?.destroy();
+                this.choiceUiGroup.getChildren().forEach(c => (c as any).setVisible?.(false));
+                this.dice1Text.setVisible(false);
+                this.dice2Text.setVisible(false);
                 this.startNewRoll(true);
             });
+            this.choiceUiGroup.add(rerollBtn);
         }
 
-        this.choiceUiGroup.addMultiple([sumText, instruction, addButton, subtractButton]);
+        this.choiceUiGroup.add(sumText);
+        this.choiceUiGroup.add(instruction);
 
-        const handleChoice = (operation: 'add' | 'subtract') => {
-            if (this.isModalOpen) return;
-            SoundManager.play('click');
-            this.choiceUiGroup.clear(true, true);
-            this.rollThirdDice(preliminarySum, operation);
-        };
-        
-        addButton.on('pointerdown', () => handleChoice('add'));
-        subtractButton.on('pointerdown', () => handleChoice('subtract'));
+        // Show the pre-created buttons from createUI
+        this.choiceUiGroup.getChildren().forEach(c => (c as any).setVisible?.(true));
+        this.isChoiceActive = true;
+    }
+
+    private handleChoice(operation: 'add' | 'subtract') {
+        if (this.isModalOpen || !this.isChoiceActive) return;
+        SoundManager.play('click');
+        this.isChoiceActive = false;
+
+        // Hide only the choice buttons
+        this.choiceUiGroup.getChildren().forEach(c => (c as any).setVisible?.(false));
+        // Destroy only the temp texts (Soma and Instruction)
+        this.choiceUiGroup.getChildren().filter(c => c.type === 'Text').forEach(t => t.destroy());
+
+        const preliminarySum = this.dice1Value + this.dice2Value;
+        this.initialRoundContext = { initialSum: preliminarySum, operation, dice3Value: 0, finalSum: preliminarySum, pointsMultiplier: 1, flatPoints: 0, specialCondition: '' };
+        this.rollThirdDice(preliminarySum, operation);
     }
 
     rollThirdDice(initialSum: number, operation: 'add' | 'subtract', isReroll = false) {
-        if (!isReroll) {
-             this.dice1Text.setVisible(true);
-             this.dice2Text.setVisible(true);
-        }
+        if (this.isModalOpen) return;
         SoundManager.play('roll');
         const centerX = this.cameras.main.width / 2;
-        let dice3Value = Phaser.Math.Between(1, 6);
+        const diceY = 280;
 
-        if (this.hasRelic('destiny_yarn') && dice3Value === 1) {
-            dice3Value = 3;
+        this.dice3Value = Math.floor(Math.random() * 6) + 1;
+        if (this.hasRelic('destiny_yarn') && this.dice3Value === 1) {
+            this.dice3Value = 3;
         }
 
-        const dice3TextStyle = { fontSize: '96px', color: '#ffffff', fontStyle: 'bold' };
-        const dice3Text = this.add.text(centerX, 350, DICE_EMOJIS[0], dice3TextStyle).setOrigin(0.5);
+        const dice3Text = this.add.text(centerX, diceY - 20, DICE_EMOJIS[0], {
+            fontSize: '112px',
+            color: '#000000'
+        }).setOrigin(0.5).setDepth(20).setScale(0);
 
         this.tweens.add({
-            targets: dice3Text, angle: 360, duration: 1000, ease: 'Cubic.easeOut',
-            onUpdate: () => dice3Text.setText(DICE_EMOJIS[Phaser.Math.Between(0, 5)]),
+            targets: dice3Text,
+            scale: 1,
+            angle: 360,
+            duration: 800,
+            ease: 'Back.easeOut',
+            onUpdate: () => {
+                dice3Text.setText(DICE_EMOJIS[Math.floor(Math.random() * 6)]);
+            },
             onComplete: () => {
-                dice3Text.setAngle(0).setText(DICE_EMOJIS[dice3Value - 1]);
-                this.calculateRoundResult(initialSum, operation, dice3Value, dice3Text);
+                dice3Text.setAngle(0);
+                dice3Text.setText(DICE_EMOJIS[this.dice3Value - 1]);
+                this.time.delayedCall(500, () => {
+                    this.calculateRoundResult(initialSum, operation, this.dice3Value, dice3Text);
+                });
             }
         });
     }
@@ -664,8 +1091,8 @@ class MainGameScene extends Phaser.Scene {
         const operator = operation === 'add' ? '+' : '-';
         const isWin = finalSum >= 6 && finalSum <= 12;
 
-        const resultEquationText = this.add.text(centerX, 480, 
-            `${this.dice1Value} + ${this.dice2Value} ${operator} ${dice3Value} = ${finalSum}`, 
+        const resultEquationText = this.add.text(centerX, 480,
+            `${this.dice1Value} + ${this.dice2Value} ${operator} ${dice3Value} = ${finalSum}`,
             { fontSize: '36px', color: isWin ? '#34d399' : '#f87171', fontStyle: 'bold' }
         ).setOrigin(0.5);
 
@@ -685,7 +1112,7 @@ class MainGameScene extends Phaser.Scene {
             this.presentCardChoice();
         }, [], this);
     }
-    
+
     formatPoints(points: number): { text: string, color: string } {
         if (points === 0) {
             return { text: `±0 Pontos`, color: '#9ca3af' };
@@ -698,9 +1125,9 @@ class MainGameScene extends Phaser.Scene {
     getPointsForOutcome(context: RoundContext): number {
         const { finalSum, pointsMultiplier, flatPoints, specialCondition, initialSum } = context;
         const phaseCondition = this.registry.get('currentCondition') as PhaseCondition;
-        
+
         let pointsChange = 0;
-        if (finalSum < 6 || finalSum > 12) { pointsChange = -40; } 
+        if (finalSum < 6 || finalSum > 12) { pointsChange = -40; }
         else if (finalSum === 9) { pointsChange = 60; }
         else if (finalSum === 8 || finalSum === 10) { pointsChange = 80; }
         else if (finalSum === 7 || finalSum === 11) { pointsChange = 100; }
@@ -710,7 +1137,7 @@ class MainGameScene extends Phaser.Scene {
         if (specialCondition === 'NEGATE_CURSE' && CURSE_CONDITIONS.includes(phaseCondition as CurseCondition)) {
             effectiveCondition = 'NONE';
         }
-        
+
         switch (effectiveCondition) {
             case 'DOUBLE_POINTS': if (pointsChange > 0) pointsChange *= 2; break;
             case 'SAFE_ROLL': if (pointsChange < 0) pointsChange = 0; break;
@@ -729,7 +1156,7 @@ class MainGameScene extends Phaser.Scene {
         if (specialCondition === 'ELECTRIC_BOOST' && pointsChange > 0) {
             pointsChange = Math.floor(pointsChange * 1.5);
         }
-        
+
         pointsChange *= pointsMultiplier;
         if (specialCondition === 'MIRROR' && pointsChange > 0) { pointsChange *= 2; }
 
@@ -825,7 +1252,7 @@ class MainGameScene extends Phaser.Scene {
                 case 'gatinho_professor': professorIsActive = true; break;
             }
         }
-        
+
         // Post-loop synergies
         const mochiCardsPlayed = playedCards.filter(c => c.name.toLowerCase().includes('mochi'));
         if (playedIds.includes('mochi_gigante')) {
@@ -846,13 +1273,13 @@ class MainGameScene extends Phaser.Scene {
         this.dice2Text.setVisible(false);
 
         const centerX = this.cameras.main.width / 2;
-        
+
         const { operation, finalSum } = this.currentRoundContext;
         const operator = operation === 'add' ? '+' : '-';
         const isWin = finalSum >= 6 && finalSum <= 12;
 
-        this.add.text(centerX, 180, 
-            `${this.dice1Value} + ${this.dice2Value} ${operator} ${this.currentRoundContext.dice3Value} = ${finalSum}`, 
+        this.add.text(centerX, 180,
+            `${this.dice1Value} + ${this.dice2Value} ${operator} ${this.currentRoundContext.dice3Value} = ${finalSum}`,
             { fontSize: '32px', color: isWin ? '#34d399' : '#f87171', fontStyle: 'bold' }
         ).setOrigin(0.5).setData('isCardUI', true);
 
@@ -869,7 +1296,7 @@ class MainGameScene extends Phaser.Scene {
         const totalRowWidth = cardsPerRow * cardWidth + (cardsPerRow - 1) * cardSpacing;
         const startX = centerX - totalRowWidth / 2;
         const startY = 260;
-        
+
         this.currentHand.forEach((card, index) => {
             if (this.isModalOpen) return;
             const row = Math.floor(index / cardsPerRow);
@@ -885,7 +1312,7 @@ class MainGameScene extends Phaser.Scene {
             cardBg.fillRoundedRect(0, 0, cardWidth, cardHeight, 10);
             cardBg.lineStyle(2, 0x4f46e5, 1);
             cardBg.strokeRoundedRect(0, 0, cardWidth, cardHeight, 10);
-            
+
             // TODO: IA - Substituir este emojiText por uma imagem da carta quando a arte estiver disponível.
             // A imagem deve ser adicionada ao cardContainer e centralizada.
             let cardContent;
@@ -905,7 +1332,7 @@ class MainGameScene extends Phaser.Scene {
                 specialText = { text: 'Rolar 3º Dado', color: '#fcd34d' };
             } else if (card.id === 'sakura') {
                 const sakuraPoints = Math.floor(currentTotalScore * 0.1);
-                specialText = {text: `+${sakuraPoints} Total`, color: this.formatPoints(sakuraPoints).color};
+                specialText = { text: `+${sakuraPoints} Total`, color: this.formatPoints(sakuraPoints).color };
             } else if (card.id === 'gatinho_supremo') {
                 const supremoPoints = currentTotalScore;
                 specialText = { text: `+${supremoPoints} Total`, color: this.formatPoints(supremoPoints).color };
@@ -914,10 +1341,10 @@ class MainGameScene extends Phaser.Scene {
                 specialText = { text: `VITÓRIA!`, color: '#fcd34d' };
                 if (reiPoints > 0) specialText.text = `+${reiPoints} & Vitória`;
             } else if (card.id === 'zuko') {
-                 const simContext = this.calculateFinalContext([...this.playedCardsThisRound, card], this.initialRoundContext);
-                 if (simContext.finalSum === 6 || simContext.finalSum === 12) {
+                const simContext = this.calculateFinalContext([...this.playedCardsThisRound, card], this.initialRoundContext);
+                if (simContext.finalSum === 6 || simContext.finalSum === 12) {
                     specialText = { text: '+1 Lançamento', color: '#818cf8' };
-                 }
+                }
             }
 
 
@@ -936,9 +1363,19 @@ class MainGameScene extends Phaser.Scene {
             cardContainer.add([cardBg, nameText, cardContent, pointsTextDisplay]);
             cardContainer.setSize(cardWidth, cardHeight).setInteractive({ useHandCursor: true });
 
-            cardContainer.on('pointerdown', () => this.showPlayConfirmationModal(card, pointsTextDisplay.text, pointsTextDisplay.style.color));
-            cardContainer.on('pointerover', () => cardBg.lineStyle(3, 0x818cf8, 1).strokeRoundedRect(0, 0, cardWidth, cardHeight, 10));
-            cardContainer.on('pointerout', () => cardBg.lineStyle(2, 0x4f46e5, 1).strokeRoundedRect(0, 0, cardWidth, cardHeight, 10));
+            cardContainer.on('pointerover', () => {
+                this.showCardTooltip(cardX + cardWidth / 2, cardY - 20, card);
+                cardBg.lineStyle(3, 0x818cf8, 1).strokeRoundedRect(0, 0, cardWidth, cardHeight, 10);
+            });
+            cardContainer.on('pointerout', () => {
+                this.hideCardTooltip();
+                cardBg.lineStyle(2, 0x4f46e5, 1).strokeRoundedRect(0, 0, cardWidth, cardHeight, 10);
+            });
+
+            cardContainer.on('pointerdown', () => {
+                this.hideCardTooltip();
+                this.showPlayConfirmationModal(card, pointsTextDisplay.text, pointsTextDisplay.style.color as string);
+            });
         });
 
         const finishButtonY = 620;
@@ -967,22 +1404,22 @@ class MainGameScene extends Phaser.Scene {
             case 'sakura': this.registry.set('totalScore', Math.floor(this.registry.get('totalScore') * 1.1)); break;
             case 'gatinho_supremo': this.registry.set('totalScore', this.registry.get('totalScore') * 2); break;
             case 'rei_gatinho': this.registry.set('totalScore', this.registry.get('stageGoal')); break;
-                            case 'zuko':
-                                const tempContext = this.calculateFinalContext([...this.playedCardsThisRound, card], this.initialRoundContext);
-                                if (tempContext.finalSum === 6 || tempContext.finalSum === 12) {
-                                    this.registry.set('totalRollsLeft', this.registry.get('totalRollsLeft') + 1);
-                                }
-                                break;
-                            case 'gatinho_escudo':
-                                this.registry.set('totalRollsLeft', this.registry.get('totalRollsLeft') + 1);
-                                break;            case 'jubileu':
+            case 'zuko':
+                const tempContext = this.calculateFinalContext([...this.playedCardsThisRound, card], this.initialRoundContext);
+                if (tempContext.finalSum === 6 || tempContext.finalSum === 12) {
+                    this.registry.set('totalRollsLeft', this.registry.get('totalRollsLeft') + 1);
+                }
+                break;
+            case 'gatinho_escudo':
+                this.registry.set('totalRollsLeft', this.registry.get('totalRollsLeft') + 1);
+                break; case 'jubileu':
                 this.cardUiGroup.clear(true, true);
                 this.children.list.filter(c => c.getData('isCardUI')).forEach(c => c.destroy());
-                this.dice1Text.setVisible(false);
-                this.dice2Text.setVisible(false);
-                // Reroll logic - re-initializes the context
+                // Reroll logic - keep dice1 and dice2 visible
+                this.dice1Text.setVisible(true);
+                this.dice2Text.setVisible(true);
                 this.rollThirdDice(this.initialRoundContext.initialSum, this.initialRoundContext.operation, true);
-                return; // Exit to prevent re-rendering card choice
+                return;
         }
 
         const isMochiCard = card.name.toLowerCase().includes('mochi');
@@ -1013,12 +1450,12 @@ class MainGameScene extends Phaser.Scene {
         // After applying effect, re-render card choices
         this.presentCardChoice();
     }
-    
+
     handleRollResult() {
         this.showCardActivations(() => {
             const oldScore = this.registry.get('totalScore');
             let pointsChange = this.getPointsForOutcome(this.currentRoundContext);
-            
+
             if (this.hasRelic('synergy_scratcher') && this.playedCardsThisRound.length >= 3) {
                 pointsChange += 50;
             }
@@ -1061,9 +1498,9 @@ class MainGameScene extends Phaser.Scene {
 
                 const container = this.add.container(centerX, centerY).setAlpha(0);
                 const emoji = this.add.text(0, 0, card.emoji, { fontSize: '64px' }).setOrigin(0.5);
-                const label = this.add.text(0, 50, text, { fontSize: '24px', color: '#fcd34d', fontStyle: 'bold', backgroundColor: 'rgba(0,0,0,0.5)', padding: {x: 8, y: 4} }).setOrigin(0.5);
+                const label = this.add.text(0, 50, text, { fontSize: '24px', color: '#fcd34d', fontStyle: 'bold', backgroundColor: 'rgba(0,0,0,0.5)', padding: { x: 8, y: 4 } }).setOrigin(0.5);
                 container.add([emoji, label]);
-                
+
                 this.tweens.add({
                     targets: container,
                     alpha: 1,
@@ -1110,7 +1547,7 @@ class MainGameScene extends Phaser.Scene {
             duration: 500,
             ease: 'Power1',
             onUpdate: (tween) => {
-                this.totalScoreText.setText(Math.floor(tween.targets[0].score).toString());
+                this.totalScoreText.setText(Math.floor((tween.targets[0] as any).score).toString());
                 this.updateProgressBar(); // Update progress bar smoothly
             },
             onComplete: () => {
@@ -1141,7 +1578,7 @@ class MainGameScene extends Phaser.Scene {
             this.isRolling = true; // Block further actions
             this.cameras.main.flash(500, 50, 200, 50);
             this.add.text(centerX, centerY, 'META ATINGIDA!', { fontSize: '48px', color: '#34d399', fontStyle: 'bold' }).setOrigin(0.5);
-            
+
             this.time.delayedCall(2500, () => this.scene.start('ShopScene'));
         } else if (totalRollsLeft <= 0) { // Game over if no rolls left and goal not met
             if (this.hasRelic('seven_lives_collar') && !this.registry.get('sevenLivesUsed')) {
@@ -1149,7 +1586,7 @@ class MainGameScene extends Phaser.Scene {
                 const currentScore = this.registry.get('totalScore');
                 this.registry.set('totalScore', Math.floor(currentScore / 2));
                 this.registry.set('totalRollsLeft', STARTING_ROLLS);
-                
+
                 this.isRolling = true;
                 this.cameras.main.flash(500, 255, 255, 255);
                 this.add.text(centerX, centerY, 'SEGUNDA CHANCE! ❤️', { fontSize: '48px', color: '#f87171', fontStyle: 'bold' }).setOrigin(0.5);
@@ -1162,7 +1599,7 @@ class MainGameScene extends Phaser.Scene {
             this.isRolling = true; // Block further actions
             this.cameras.main.flash(500, 200, 50, 50);
             this.add.text(centerX, centerY, 'FALHOU!', { fontSize: '48px', color: '#f87171', fontStyle: 'bold' }).setOrigin(0.5);
-            
+
             this.time.delayedCall(2000, () => this.scene.start('GameOverScene'));
         } else {
             this.isRolling = false;
@@ -1178,48 +1615,93 @@ class MainGameScene extends Phaser.Scene {
 
         const { width, height } = this.cameras.main;
         const blocker = this.add.graphics().fillStyle(0x000000, 0.7).fillRect(0, 0, width, height).setDepth(10);
-        blocker.setInteractive(new Phaser.Geom.Rectangle(0,0,width,height), Phaser.Geom.Rectangle.Contains); // Block clicks
+        blocker.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains); // Block clicks
 
         const modalBg = this.add.graphics().fillStyle(0x1f2937, 0.95).fillRoundedRect(20, 50, width - 40, height - 100, 15).setDepth(11);
         modalBg.lineStyle(2, 0x4f46e5).strokeRoundedRect(20, 50, width - 40, height - 100, 15);
 
         const title = this.add.text(width / 2, 80, 'Seu Baralho', { fontSize: '32px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(12);
-        
+
         const closeButton = this.add.text(width / 2, height - 80, 'Fechar', { fontSize: '24px', color: '#fff', backgroundColor: '#dc2626', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(12);
         closeButton.on('pointerdown', () => this.closeDeckViewer());
 
         this.deckViewerGroup.addMultiple([blocker, modalBg, title, closeButton]);
 
         const deck: Card[] = this.registry.get('playerDeck');
-        const cardWidth = 90;
-        const cardHeight = 130;
-        const columns = 3;
+        const cardWidth = 75;
+        const cardHeight = 105;
+        const columns = 4;
         const cardSpacing = 10;
         const startX = width / 2 - (columns * (cardWidth + cardSpacing) - cardSpacing) / 2;
-        const startY = 130;
+        let currentY = 130;
+
+        // --- Cards Section ---
+        const cardsTitle = this.add.text(width / 2, currentY - 20, 'Gatinhos', { fontSize: '20px', color: COLORS.popPink, fontStyle: 'bold' }).setOrigin(0.5).setDepth(12);
+        this.deckViewerGroup.add(cardsTitle);
 
         deck.forEach((card, index) => {
             const row = Math.floor(index / columns);
             const col = index % columns;
             const cardX = startX + col * (cardWidth + cardSpacing);
-            const cardY = startY + row * (cardHeight + cardSpacing);
+            const cardY = currentY + row * (cardHeight + cardSpacing);
 
             const container = this.add.container(cardX, cardY).setDepth(12);
             const bg = this.add.graphics().fillStyle(0x374151).fillRoundedRect(0, 0, cardWidth, cardHeight, 8);
-            
-            // TODO: IA - Substituir este emoji por uma imagem da carta quando a arte estiver disponível.
-            // A imagem deve ser adicionada ao container e centralizada.
+            bg.lineStyle(2, COLORS.popPink, 0.5).strokeRoundedRect(0, 0, cardWidth, cardHeight, 8);
+
             let cardContent;
             if (card.image && this.textures.exists(card.id)) {
                 cardContent = this.add.image(cardWidth / 2, cardHeight / 2 - 10, card.id);
-                cardContent.setDisplaySize(cardWidth * 0.9, cardWidth * 0.9);
+                cardContent.setDisplaySize(cardWidth * 0.8, cardWidth * 0.8);
             } else {
-                cardContent = this.add.text(cardWidth/2, cardHeight / 2, card.emoji, {fontSize: '36px'}).setOrigin(0.5);
+                cardContent = this.add.text(cardWidth / 2, cardHeight / 2, card.emoji, { fontSize: '32px' }).setOrigin(0.5);
             }
-            const name = this.add.text(cardWidth / 2, cardHeight - 15, card.name, { fontSize: '12px', color: '#fff', align: 'center', wordWrap: { width: cardWidth - 5 } }).setOrigin(0.5);
-            container.add([bg, cardContent, name]);
+            const nameText = this.add.text(cardWidth / 2, cardHeight - 15, card.name, { fontSize: '10px', color: '#fff', align: 'center', wordWrap: { width: cardWidth - 5 } }).setOrigin(0.5);
+            container.add([bg, cardContent, nameText]);
+            container.setSize(cardWidth, cardHeight).setInteractive({ useHandCursor: true });
+            container.on('pointerdown', () => this.showInfoModal(card));
             this.deckViewerGroup.add(container);
         });
+
+        // Update currentY for Relics
+        const numRows = Math.ceil(deck.length / columns);
+        currentY += numRows * (cardHeight + cardSpacing) + 40;
+
+        // --- Relics Section ---
+        const relics: Relic[] = this.registry.get('playerRelics');
+        if (relics && relics.length > 0) {
+            const relicsTitle = this.add.text(width / 2, currentY - 20, 'Relíquias', { fontSize: '20px', color: COLORS.popPurple, fontStyle: 'bold' }).setOrigin(0.5).setDepth(12);
+            this.deckViewerGroup.add(relicsTitle);
+
+            const relicWidth = 60;
+            const relicHeight = 60;
+            const relicColumns = 5;
+            const relicSpacing = 10;
+            const rStartX = width / 2 - (relicColumns * (relicWidth + relicSpacing) - relicSpacing) / 2;
+
+            relics.forEach((relic, index) => {
+                const row = Math.floor(index / relicColumns);
+                const col = index % relicColumns;
+                const rX = rStartX + col * (relicWidth + relicSpacing);
+                const rY = currentY + row * (relicHeight + relicSpacing);
+
+                const rContainer = this.add.container(rX, rY).setDepth(12);
+                const rBg = this.add.graphics().fillStyle(0x374151).fillCircle(relicWidth / 2, relicHeight / 2, relicWidth / 2);
+                rBg.lineStyle(2, COLORS.popPurple, 0.5).strokeCircle(relicWidth / 2, relicHeight / 2, relicWidth / 2);
+
+                const rEmoji = this.add.text(relicWidth / 2, relicHeight / 2, relic.emoji, { fontSize: '32px' }).setOrigin(0.5);
+
+                rContainer.add([rBg, rEmoji]);
+                rContainer.setSize(relicWidth, relicHeight).setInteractive({ useHandCursor: true });
+                rContainer.on('pointerdown', () => this.showInfoModal(relic));
+
+                // Tooltip simple indication
+                rContainer.on('pointerover', () => rEmoji.setScale(1.2));
+                rContainer.on('pointerout', () => rEmoji.setScale(1));
+
+                this.deckViewerGroup.add(rContainer);
+            });
+        }
 
         this.deckViewerGroup.setVisible(true);
     }
@@ -1230,7 +1712,7 @@ class MainGameScene extends Phaser.Scene {
         this.deckViewerGroup.clear(true, true);
         this.deckViewerGroup.setVisible(false);
     }
-    
+
     // --- Modal Methods ---
     closeModal() {
         SoundManager.play('click');
@@ -1242,23 +1724,63 @@ class MainGameScene extends Phaser.Scene {
     showInfoModal(item: Card | Relic) {
         this.isModalOpen = true;
         this.modalGroup.clear(true, true).setDepth(20);
-        
+
         const { width, height } = this.cameras.main;
         const centerX = width / 2;
-        const blocker = this.add.graphics().fillStyle(0x000000, 0.7).fillRect(0, 0, width, height);
+        const centerY = height / 2;
+
+        const blocker = this.add.graphics().fillStyle(0x000000, 0.8).fillRect(0, 0, width, height);
         blocker.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
-        
-        const modalBg = this.add.graphics().fillStyle(0x1f2937).fillRoundedRect(centerX - 150, 200, 300, 250, 15);
-        modalBg.lineStyle(2, 0x4f46e5).strokeRoundedRect(centerX - 150, 200, 300, 250, 15);
 
-        const emoji = this.add.text(centerX, 250, item.emoji, { fontSize: '48px' }).setOrigin(0.5);
-        const name = this.add.text(centerX, 300, item.name, { fontSize: '20px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-        const desc = this.add.text(centerX, 350, item.description, { fontSize: '14px', color: '#d1d5db', align: 'center', wordWrap: { width: 280 } }).setOrigin(0.5);
-        
-        const closeButton = this.add.text(centerX, 420, 'Fechar', { fontSize: '20px', color: '#fff', backgroundColor: '#6b7280', padding: { x: 15, y: 8 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        closeButton.on('pointerdown', () => this.closeModal());
+        const modalY = centerY - 50;
+        const modalWidth = 320;
+        const modalHeight = 460;
 
-        this.modalGroup.addMultiple([blocker, modalBg, emoji, name, desc, closeButton]);
+        // Modal Shadow
+        const shadow = this.add.graphics().fillStyle(0x000000, 0.3).fillRoundedRect(centerX - modalWidth / 2 + 8, modalY - modalHeight / 2 + 8, modalWidth, modalHeight, 25);
+
+        // Modal Body
+        const modalBg = this.add.graphics().fillStyle(0xffffff, 1).fillRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, modalHeight, 25);
+        modalBg.lineStyle(6, COLORS.textBrown, 1).strokeRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, modalHeight, 25);
+
+        // Header
+        const headerH = 60;
+        const header = this.add.graphics().fillStyle(COLORS.pastelCream, 1).fillRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, headerH, { tl: 25, tr: 25, bl: 0, br: 0 });
+        header.lineStyle(2, 0xd1d5db, 1).moveTo(centerX - modalWidth / 2, modalY - modalHeight / 2 + headerH).lineTo(centerX + modalWidth / 2, modalY - modalHeight / 2 + headerH).strokePath();
+
+        const title = this.add.text(centerX, modalY - modalHeight / 2 + headerH / 2, item.name, {
+            fontFamily: 'Fredoka One',
+            fontSize: '22px',
+            color: COLORS.textBrown
+        }).setOrigin(0.5);
+
+        // Card Art Focus
+        let art;
+        const artSize = 240;
+        if ((item as Card).image && this.textures.exists(item.id)) {
+            art = this.add.image(centerX, modalY - 50, item.id).setDisplaySize(artSize, artSize);
+        } else {
+            art = this.add.text(centerX, modalY - 50, item.emoji, { fontSize: '120px' }).setOrigin(0.5);
+        }
+
+        // Description Section
+        const descBg = this.add.graphics().fillStyle(COLORS.creamBg, 0.5).fillRoundedRect(centerX - 140, modalY + 90, 280, 80, 15);
+        const desc = this.add.text(centerX, modalY + 130, item.description, {
+            fontFamily: 'Nunito',
+            fontSize: '16px',
+            color: COLORS.textBrown,
+            align: 'center',
+            wordWrap: { width: 250 }
+        }).setOrigin(0.5);
+
+        const closeBtn = this.add.container(centerX, modalY + 220);
+        const btnBg = this.add.graphics().fillStyle(COLORS.btnRed, 1).fillRoundedRect(-80, -20, 160, 40, 20);
+        const btnTxt = this.add.text(0, 0, 'Voltar', { fontFamily: 'Fredoka One', fontSize: '18px', color: '#fff' }).setOrigin(0.5);
+        closeBtn.add([btnBg, btnTxt]);
+        closeBtn.setSize(160, 40).setInteractive({ useHandCursor: true });
+        closeBtn.on('pointerdown', () => this.closeModal());
+
+        this.modalGroup.addMultiple([blocker, shadow, modalBg, header, title, art, descBg, desc, closeBtn]);
         this.modalGroup.setVisible(true);
     }
 
@@ -1269,38 +1791,86 @@ class MainGameScene extends Phaser.Scene {
 
         const { width, height } = this.cameras.main;
         const centerX = width / 2;
+        const centerY = height / 2;
 
-        const blocker = this.add.graphics().fillStyle(0x000000, 0.7).fillRect(0, 0, width, height);
+        const blocker = this.add.graphics().fillStyle(COLORS.black, 0.8).fillRect(0, 0, width, height);
         blocker.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
 
-        const modalBg = this.add.graphics().fillStyle(0x1f2937).fillRoundedRect(centerX - 160, 200, 320, 300, 15);
-        modalBg.lineStyle(2, 0x4f46e5).strokeRoundedRect(centerX - 160, 200, 320, 300, 15);
-        
-        const emoji = this.add.text(centerX, 240, card.emoji, { fontSize: '48px' }).setOrigin(0.5);
-        const name = this.add.text(centerX, 285, card.name, { fontSize: '20px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-        const desc = this.add.text(centerX, 330, card.description, { fontSize: '14px', color: '#d1d5db', align: 'center', wordWrap: { width: 280 } }).setOrigin(0.5);
-        const outcome = this.add.text(centerX, 380, `Resultado: ${outcomeText}`, { fontSize: '16px', color: outcomeColor, fontStyle: 'bold' }).setOrigin(0.5);
-        
-        const confirmButton = this.add.text(centerX - 70, 450, 'Usar', { fontSize: '20px', color: '#fff', backgroundColor: '#16a34a', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        confirmButton.on('pointerdown', () => {
+        const modalY = centerY - 50;
+        const modalWidth = 320;
+        const modalHeight = 480;
+
+        // Modal Shadow
+        const shadow = this.add.graphics().fillStyle(0x000000, 0.3).fillRoundedRect(centerX - modalWidth / 2 + 8, modalY - modalHeight / 2 + 8, modalWidth, modalHeight, 25);
+
+        // Modal Body
+        const modalBg = this.add.graphics().fillStyle(0xffffff, 1).fillRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, modalHeight, 25);
+        modalBg.lineStyle(6, COLORS.textBrown, 1).strokeRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, modalHeight, 25);
+
+        // Header
+        const headerH = 60;
+        const header = this.add.graphics().fillStyle(COLORS.pastelCream, 1).fillRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, headerH, { tl: 25, tr: 25, bl: 0, br: 0 });
+        header.lineStyle(2, 0xd1d5db, 1).moveTo(centerX - modalWidth / 2, modalY - modalHeight / 2 + headerH).lineTo(centerX + modalWidth / 2, modalY - modalHeight / 2 + headerH).strokePath();
+
+        const title = this.add.text(centerX, modalY - modalHeight / 2 + headerH / 2, card.name, {
+            fontFamily: 'Fredoka One',
+            fontSize: '22px',
+            color: COLORS.textBrown
+        }).setOrigin(0.5);
+
+        // Card Art Focus
+        let art;
+        const artSize = 240;
+        if (card.image && this.textures.exists(card.id)) {
+            art = this.add.image(centerX, modalY - 50, card.id).setDisplaySize(artSize, artSize);
+        } else {
+            art = this.add.text(centerX, modalY - 50, card.emoji, { fontSize: '120px' }).setOrigin(0.5);
+        }
+
+        // Info Section
+        const infoBg = this.add.graphics().fillStyle(COLORS.creamBg, 0.5).fillRoundedRect(centerX - 140, modalY + 90, 280, 100, 15);
+        const desc = this.add.text(centerX, modalY + 125, card.description, {
+            fontFamily: 'Nunito',
+            fontSize: '14px',
+            color: COLORS.textBrown,
+            align: 'center',
+            wordWrap: { width: 260 }
+        }).setOrigin(0.5);
+
+        const outcome = this.add.text(centerX, modalY + 165, `Resultado: ${outcomeText}`, {
+            fontFamily: 'Fredoka One',
+            fontSize: '16px',
+            color: outcomeColor
+        }).setOrigin(0.5);
+
+        // Buttons
+        const btnY = modalY + 230;
+        const confirmBtn = this.add.container(centerX - 75, btnY);
+        const cBg = this.add.graphics().fillStyle(0x16a34a, 1).fillRoundedRect(-65, -20, 130, 40, 20);
+        const cTxt = this.add.text(0, 0, 'Usar', { fontFamily: 'Fredoka One', fontSize: '18px', color: '#fff' }).setOrigin(0.5);
+        confirmBtn.add([cBg, cTxt]);
+        confirmBtn.setSize(130, 40).setInteractive({ useHandCursor: true });
+        confirmBtn.on('pointerdown', () => {
             this.closeModal();
             this.applyCardAndContinue(card);
         });
 
-        const cancelButton = this.add.text(centerX + 70, 450, 'Cancelar', { fontSize: '20px', color: '#fff', backgroundColor: '#dc2626', padding: { x: 15, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        cancelButton.on('pointerdown', () => this.closeModal());
-        
-        this.modalGroup.addMultiple([blocker, modalBg, emoji, name, desc, outcome, confirmButton, cancelButton]);
+        const cancelBtn = this.add.container(centerX + 75, btnY);
+        const rBg = this.add.graphics().fillStyle(COLORS.btnRed, 1).fillRoundedRect(-65, -20, 130, 40, 20);
+        const rTxt = this.add.text(0, 0, 'Voltar', { fontFamily: 'Fredoka One', fontSize: '18px', color: '#fff' }).setOrigin(0.5);
+        cancelBtn.add([rBg, rTxt]);
+        cancelBtn.setSize(130, 40).setInteractive({ useHandCursor: true });
+        cancelBtn.on('pointerdown', () => this.closeModal());
+
+        this.modalGroup.addMultiple([blocker, shadow, modalBg, header, title, art, infoBg, desc, outcome, confirmBtn, cancelBtn]);
         this.modalGroup.setVisible(true);
     }
 }
 
 class ShopScene extends Phaser.Scene {
-    // Modal properties
     modalGroup!: Phaser.GameObjects.Group;
     isModalOpen = false;
 
-    // FIX: Declare Phaser properties to resolve TypeScript errors.
     add!: Phaser.GameObjects.GameObjectFactory;
     cameras!: Phaser.Cameras.Scene2D.CameraManager;
     registry!: Phaser.Data.DataManager;
@@ -1311,44 +1881,111 @@ class ShopScene extends Phaser.Scene {
     constructor() { super('ShopScene'); }
 
     create() {
-        const centerX = this.cameras.main.width / 2;
-        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+
+        // Background with overlay
+        this.add.image(centerX, height / 2, 'fundo_loja').setDisplaySize(width, height);
+        this.add.graphics().fillStyle(0xffffff, 0.4).fillRect(0, 0, width, height);
+
         this.isModalOpen = false;
         this.modalGroup = this.add.group();
         this.modalGroup.setVisible(false);
 
-        this.add.text(centerX, 50, 'Loja de Gatinhos', { fontSize: '48px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        this.add.text(centerX, 95, 'Fortaleça seu baralho!', { fontSize: '20px', color: '#c7d2fe' }).setOrigin(0.5);
-        
-        let currentScore = this.registry.get('totalScore');
-        const scoreText = this.add.text(centerX, 130, `Seus Pontos: ${currentScore}`, { fontSize: '28px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
-        
+        // --- Header Section ---
+        // Title Banner (Sticker effect)
+        const bannerContainer = this.add.container(centerX, 70);
+        const bannerBg = this.add.graphics();
+        bannerBg.fillStyle(COLORS.popBlue, 1);
+        bannerBg.lineStyle(5, COLORS.white, 1);
+        bannerBg.fillRoundedRect(-140, -30, 280, 60, 20);
+        bannerBg.strokeRoundedRect(-140, -30, 280, 60, 20);
+
+        // Shadow for banner
+        const bannerShadow = this.add.graphics();
+        bannerShadow.fillStyle(0x000000, 0.2);
+        bannerShadow.fillRoundedRect(-140, -24, 280, 60, 20);
+
+        const bannerText = this.add.text(0, 0, 'Loja de Gatinhos', {
+            fontFamily: '"Fredoka One"',
+            fontSize: '32px',
+            color: '#ffffff',
+            stroke: '#ffffff',
+            strokeThickness: 1
+        }).setOrigin(0.5);
+
+        bannerContainer.add([bannerShadow, bannerBg, bannerText]);
+        bannerContainer.setAngle(-2);
+
+        // Currency Badge
+        const currencyY = 130;
+        const currentScore = this.registry.get('totalScore');
+
+        const badgeBg = this.add.graphics();
+        badgeBg.fillStyle(COLORS.white, 1);
+        badgeBg.lineStyle(2, COLORS.deepBrown, 0.2);
+        badgeBg.fillRoundedRect(centerX - 120, currencyY - 20, 240, 40, 20);
+        badgeBg.strokeRoundedRect(centerX - 120, currencyY - 20, 240, 40, 20);
+
+        const coinIcon = this.add.circle(centerX - 100, currencyY, 12, 0xfacc15);
+        coinIcon.setStrokeStyle(2, 0xca8a04);
+        const coinSymbol = this.add.text(centerX - 100, currencyY, '$', { fontSize: '12px', color: '#713f12', fontStyle: 'bold' }).setOrigin(0.5);
+
+        const scoreText = this.add.text(centerX + 10, currencyY, `Pontos Totais: ${currentScore}`, {
+            fontFamily: '"Nunito"',
+            fontSize: '18px',
+            color: '#5D4037',
+            fontStyle: '800'
+        }).setOrigin(0.5);
+
+        // --- Grid Section ---
         const shopItems = this.generateShopItems();
         this.displayShopItems(shopItems, scoreText);
-        
+
         const shopRelic = this.generateShopRelic();
         if (shopRelic) {
             this.displayShopRelic(shopRelic, scoreText);
         }
 
-        const continueButton = this.add.text(centerX, 660, 'Próxima Fase', { fontSize: '32px', color: '#ffffff', backgroundColor: '#16a34a', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        continueButton.on('pointerover', () => continueButton.setBackgroundColor('#22c55e'));
-        continueButton.on('pointerout', () => continueButton.setBackgroundColor('#16a34a'));
-        continueButton.on('pointerdown', () => {
+        // --- Footer Section ---
+        const footerY = 670;
+        const btnWidth = 160;
+        const btnHeight = 60;
+
+        const btnContainer = this.add.container(centerX, footerY);
+        const btnImg = this.add.image(0, 0, 'btn_proxima').setDisplaySize(btnWidth, btnHeight);
+
+        btnContainer.add([btnImg]);
+        btnContainer.setSize(btnWidth, btnHeight).setInteractive({ useHandCursor: true });
+
+        btnContainer.on('pointerover', () => {
+            this.tweens.add({ targets: btnContainer, scale: 1.05, duration: 100 });
+        });
+
+        btnContainer.on('pointerout', () => {
+            this.tweens.add({ targets: btnContainer, scale: 1, duration: 100 });
+        });
+
+        btnContainer.on('pointerdown', () => {
             if (this.isModalOpen) return;
             SoundManager.play('click');
-            const relics: Relic[] = this.registry.get('playerRelics');
-            if (relics.some(r => r.id === 'full_bowl')) {
-                const score = this.registry.get('totalScore');
-                this.registry.set('totalScore', score + 50);
-            }
+            btnImg.setScale(0.95);
 
-            let rolls = this.registry.get('totalRollsLeft');
-            this.registry.set('totalRollsLeft', rolls + 1);
+            this.time.delayedCall(100, () => {
+                btnImg.setScale(1);
+                const relics: Relic[] = this.registry.get('playerRelics');
+                if (relics.some(r => r.id === 'full_bowl')) {
+                    const score = this.registry.get('totalScore');
+                    this.registry.set('totalScore', score + 50);
+                }
 
-            const phase = this.registry.get('currentPhase');
-            this.registry.set('currentPhase', phase + 1);
-            this.scene.start('PhaseIntroScene');
+                let rolls = this.registry.get('totalRollsLeft');
+                this.registry.set('totalRollsLeft', rolls + 1);
+
+                const phase = this.registry.get('currentPhase');
+                this.registry.set('currentPhase', phase + 1);
+                this.scene.start('PhaseIntroScene');
+            });
         });
     }
 
@@ -1357,11 +1994,9 @@ class ShopScene extends Phaser.Scene {
         const weightedPool: Card[] = [];
         allCards.forEach(card => {
             const weight = card.rarity === 'Common' ? 10 : (card.rarity === 'Uncommon' ? 5 : (card.rarity === 'Rare' ? 2 : 1));
-            for (let i = 0; i < weight; i++) {
-                weightedPool.push(card);
-            }
+            for (let i = 0; i < weight; i++) weightedPool.push(card);
         });
-        
+
         const selection: Card[] = [];
         const usedIds = new Set();
         while (selection.length < 4 && weightedPool.length > 0) {
@@ -1376,220 +2011,217 @@ class ShopScene extends Phaser.Scene {
     }
 
     generateShopRelic(): Relic | null {
-        // Only show a relic 50% of the time
         if (Math.random() < 0.5) return null;
-
         const allRelics = Object.values(RELIC_DEFINITIONS);
         const playerRelics: Relic[] = this.registry.get('playerRelics');
         const playerRelicIds = new Set(playerRelics.map(r => r.id));
-
         const availableRelics = allRelics.filter(r => !playerRelicIds.has(r.id));
         if (availableRelics.length === 0) return null;
 
         const weightedPool: Relic[] = [];
         availableRelics.forEach(relic => {
             const weight = relic.rarity === 'Common' ? 10 : (relic.rarity === 'Uncommon' ? 5 : (relic.rarity === 'Rare' ? 2 : 1));
-            for (let i = 0; i < weight; i++) {
-                weightedPool.push(relic);
-            }
+            for (let i = 0; i < weight; i++) weightedPool.push(relic);
         });
-
-        const randomIndex = Phaser.Math.Between(0, weightedPool.length - 1);
-        return weightedPool[randomIndex];
-    }
-
-    displayShopRelic(relic: Relic, scoreText: Phaser.GameObjects.Text) {
-        const centerX = this.cameras.main.width / 2;
-        const cardWidth = 120;
-        const cardHeight = 140; // Smaller relic card
-        const relicY = 500; // Moved down below cards
-
-        const relicContainer = this.add.container(centerX - cardWidth / 2, relicY);
-
-        const relics: Relic[] = this.registry.get('playerRelics') || [];
-        const hasBargainAmulet = relics.some(r => r.id === 'bargain_amulet');
-        const finalCost = hasBargainAmulet ? Math.floor(relic.cost * 0.85) : relic.cost;
-        
-        this.add.text(centerX, relicY - 15, 'Relíquia da Fase', { fontSize: '20px', color: '#e0e7ff', fontStyle: 'bold' }).setOrigin(0.5);
-
-        const cardBg = this.add.graphics();
-        const rarityColor = relic.rarity === 'Common' ? 0x9ca3af : (relic.rarity === 'Uncommon' ? 0x3b82f6 : (relic.rarity === 'Rare' ? 0xa855f7 : 0xfbbf24));
-        
-        const costText = this.add.text(cardWidth / 2, cardHeight - 18, `${finalCost}p`, { fontSize: '16px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
-        const emojiText = this.add.text(cardWidth / 2, 30, relic.emoji, { fontSize: '36px' }).setOrigin(0.5);
-        const nameText = this.add.text(cardWidth / 2, 65, relic.name, { fontSize: '14px', color: '#ffffff', align: 'center', wordWrap: { width: cardWidth - 10 } }).setOrigin(0.5, 0);
-        const descText = this.add.text(cardWidth / 2, 90, relic.description, { fontSize: '12px', color: '#d1d5db', align: 'center', wordWrap: { width: cardWidth - 10 } }).setOrigin(0.5, 0);
-        
-        const drawRelic = (isHover = false, isPurchased = false, canAfford = true) => {
-            cardBg.clear();
-            cardBg.fillStyle(isPurchased ? 0x111827 : 0x374151, 1);
-            cardBg.fillRoundedRect(0, 0, cardWidth, cardHeight, 15);
-            const borderColor = isHover && canAfford && !isPurchased ? 0xffffff : rarityColor;
-            cardBg.lineStyle(isHover && canAfford && !isPurchased ? 4 : 3, borderColor, isPurchased ? 0.3 : (canAfford ? 1 : 0.5));
-            cardBg.strokeRoundedRect(0, 0, cardWidth, cardHeight, 15);
-            const alpha = isPurchased ? 0.3 : (canAfford ? 1 : 0.5);
-            [emojiText, nameText, descText, costText].forEach(t => t.setAlpha(alpha));
-        };
-
-        let isPurchased = false;
-        let canAfford = this.registry.get('totalScore') >= finalCost;
-        drawRelic(false, isPurchased, canAfford);
-        
-        relicContainer.add([cardBg, emojiText, nameText, descText, costText]);
-        relicContainer.setSize(cardWidth, cardHeight).setInteractive({ useHandCursor: true });
-        
-        relicContainer.on('pointerdown', () => {
-            if (isPurchased || !canAfford || this.isModalOpen) return;
-            
-            const onConfirm = () => {
-                SoundManager.play('buy');
-                this.closeModal();
-                isPurchased = true;
-                let currentScore = this.registry.get('totalScore');
-                currentScore -= finalCost;
-                this.registry.set('totalScore', currentScore);
-
-                const playerRelics: Relic[] = this.registry.get('playerRelics');
-                playerRelics.push(relic);
-                this.registry.set('playerRelics', playerRelics);
-                scoreText.setText(`Seus Pontos: ${currentScore}`);
-                
-                const purchasedText = this.add.text(cardWidth / 2, cardHeight / 2, 'Adquirida!', {fontSize: '18px', color: '#34d399'}).setOrigin(0.5);
-                relicContainer.add(purchasedText);
-                drawRelic(false, true);
-            };
-
-            this.showBuyConfirmationModal(relic, 'Relic', finalCost, onConfirm);
-        });
-
-        let isHovered = false;
-        relicContainer.on('pointerover', () => {
-            isHovered = true;
-            if (!isPurchased) {
-                drawRelic(true, false, canAfford);
-            }
-        });
-        relicContainer.on('pointerout', () => {
-            isHovered = false;
-            if (!isPurchased) {
-                drawRelic(false, false, canAfford);
-            }
-        });
-
-
-        this.time.addEvent({
-            delay: 250, loop: true,
-            callback: () => {
-                canAfford = this.registry.get('totalScore') >= finalCost;
-                if (!isPurchased) drawRelic(isHovered, isPurchased, canAfford);
-            }
-        });
+        return weightedPool[Phaser.Math.Between(0, weightedPool.length - 1)];
     }
 
     displayShopItems(items: Card[], scoreText: Phaser.GameObjects.Text) {
-        const centerX = this.cameras.main.width / 2;
-        const cardWidth = 110;
-        const cardHeight = 150;
-        const columns = 2;
-        const cardSpacing = 15;
-        const startX = centerX - (columns * (cardWidth + cardSpacing) - cardSpacing) / 2;
-        const startY = 170;
+        const { width } = this.cameras.main;
+        const centerX = width / 2;
+        const cardWidth = 145;
+        const cardHeight = 160;
+        const spacing = 15;
+        const startX = centerX - cardWidth - spacing / 2 + cardWidth / 2;
+        const startY = 250;
 
         items.forEach((card, index) => {
-            const row = Math.floor(index / columns);
-            const col = index % columns;
-            const cardX = startX + col * (cardWidth + cardSpacing);
-            const cardY = startY + row * (cardHeight + cardSpacing);
+            const col = index % 2;
+            const row = Math.floor(index / 2);
+            const x = centerX - (cardWidth + spacing) / 2 + (col * (cardWidth + spacing));
+            const y = startY + (row * (cardHeight + spacing));
 
-            const cardContainer = this.add.container(cardX, cardY);
-            const cardBg = this.add.graphics();
-            const rarityColor = card.rarity === 'Common' ? 0x6b7280 : (card.rarity === 'Uncommon' ? 0x2563eb : (card.rarity === 'Rare' ? 0x9333ea : 0xfbbf24));
-            
+            const cardContainer = this.add.container(x, y);
+            const isBlue = index % 2 !== 0;
+            const themeColor = isBlue ? COLORS.popBlue : COLORS.popPink;
+
+            // Cartoon Shadow
+            const shadow = this.add.graphics();
+            shadow.fillStyle(0x000000, 0.15);
+            shadow.fillRoundedRect(-cardWidth / 2, -cardHeight / 2 + 6, cardWidth, cardHeight, 25);
+
+            // Card Bg
+            const bg = this.add.graphics();
+            bg.fillStyle(COLORS.pastelCream, 1);
+            bg.lineStyle(5, themeColor, 1);
+            bg.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 25);
+            bg.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 25);
+
+            // Inner Image Holder
+            const imgBg = this.add.graphics();
+            imgBg.fillStyle(0xffffff, 1);
+            imgBg.lineStyle(2, themeColor, 0.2);
+            imgBg.fillRoundedRect(-cardWidth / 2 + 10, -cardHeight / 2 + 10, cardWidth - 20, cardWidth - 45, 15);
+            imgBg.strokeRoundedRect(-cardWidth / 2 + 10, -cardHeight / 2 + 10, cardWidth - 20, cardWidth - 45, 15);
+
+            // Promo Badge for some cards
+            let promoBadge;
+            if (index === 1 || index === 3) {
+                const badgeCont = this.add.container(cardWidth / 2 - 15, cardHeight / 2 - 45);
+                const b = this.add.graphics();
+                b.fillStyle(0xdc2626, 1);
+                b.fillRoundedRect(-30, -8, 60, 16, 4);
+                const t = this.add.text(0, 0, 'PROMOÇÃO!', { fontSize: '8px', fontFamily: '"Fredoka One"', color: '#fff' }).setOrigin(0.5);
+                badgeCont.add([b, t]).setAngle(-10);
+                promoBadge = badgeCont;
+            }
+
+            // Image
+            let cardImage;
+            if (card.image && this.textures.exists(card.id)) {
+                cardImage = this.add.image(0, -25, card.id).setDisplaySize(90, 90);
+            } else {
+                cardImage = this.add.text(0, -25, card.emoji, { fontSize: '48px' }).setOrigin(0.5);
+            }
+
+            const name = this.add.text(0, 30, card.name, {
+                fontFamily: '"Fredoka One"',
+                fontSize: '14px',
+                color: Phaser.Display.Color.IntegerToColor(themeColor).rgba,
+                align: 'center',
+                wordWrap: { width: cardWidth - 20 }
+            }).setOrigin(0.5, 0);
+
+            // Cost Button Style
             const relics: Relic[] = this.registry.get('playerRelics') || [];
             const hasBargainAmulet = relics.some(r => r.id === 'bargain_amulet');
             const finalCost = hasBargainAmulet ? Math.floor(card.cost * 0.85) : card.cost;
-            const costText = this.add.text(cardWidth / 2, cardHeight - 15, `${finalCost}p`, { fontSize: '16px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
 
-            // TODO: IA - Substituir este emojiText por uma imagem da carta quando a arte estiver disponível.
-            // A imagem deve ser adicionada ao cardContainer e centralizada.
-            let cardContent;
-            const nameText = this.add.text(cardWidth / 2, 12, card.name, { fontSize: '12px', color: '#ffffff', align: 'center', wordWrap: { width: cardWidth - 10 } }).setOrigin(0.5);
-            if (card.image && this.textures.exists(card.id)) {
-                cardContent = this.add.image(cardWidth / 2, cardHeight / 2, card.id);
-                cardContent.setDisplaySize(cardWidth * 0.9, cardWidth * 0.9);
-            } else {
-                cardContent = this.add.text(cardWidth / 2, cardHeight / 2, card.emoji, { fontSize: '48px' }).setOrigin(0.5);
-            }
-            
-            const drawCard = (isHover = false, isPurchased = false, canAfford = true) => {
-                cardBg.clear();
-                cardBg.fillStyle(isPurchased ? 0x111827 : 0x374151, 1);
-                cardBg.fillRoundedRect(0, 0, cardWidth, cardHeight, 10);
-                const borderColor = isHover && canAfford && !isPurchased ? 0xffffff : rarityColor;
-                cardBg.lineStyle(isHover && canAfford && !isPurchased ? 3 : 2, borderColor, isPurchased ? 0.3 : (canAfford ? 1 : 0.5));
-                cardBg.strokeRoundedRect(0, 0, cardWidth, cardHeight, 10);
-                
-                const alpha = isPurchased ? 0.3 : (canAfford ? 1 : 0.5);
-                nameText.setAlpha(alpha);
-                cardContent.setAlpha(alpha);
-                costText.setAlpha(alpha);
-            };
-            
-            let isPurchased = false;
-            let canAfford = this.registry.get('totalScore') >= finalCost;
-            drawCard(false, isPurchased, canAfford);
-            
-            cardContainer.add([cardBg, nameText, cardContent, costText]);
+            const costGroup = this.add.container(0, cardHeight / 2 - 20);
+            const costBg = this.add.graphics();
+            costBg.fillStyle(0xF5E6D3, 1);
+            costBg.fillRoundedRect(-cardWidth / 2 + 10, -12, cardWidth - 20, 24, 12);
+            const costT = this.add.text(0, 0, `${finalCost} Pontos 🧶`, {
+                fontFamily: '"Nunito"',
+                fontSize: '12px',
+                color: '#5D4037',
+                fontStyle: '800'
+            }).setOrigin(0.5);
+            costGroup.add([costBg, costT]);
+
+            cardContainer.add([shadow, bg, imgBg, cardImage, name, costGroup]);
+            if (promoBadge) cardContainer.add(promoBadge);
+
             cardContainer.setSize(cardWidth, cardHeight).setInteractive({ useHandCursor: true });
-            
-            cardContainer.on('pointerdown', () => {
-                if (isPurchased || !canAfford || this.isModalOpen) return;
-                
-                const onConfirm = () => {
-                    SoundManager.play('buy');
-                    this.closeModal();
-                    isPurchased = true;
-                    let currentScore = this.registry.get('totalScore');
-                    currentScore -= finalCost;
-                    this.registry.set('totalScore', currentScore);
 
-                    let deck: Card[] = this.registry.get('playerDeck');
-                    deck.push(card);
-                    this.registry.set('playerDeck', deck);
-
-                    scoreText.setText(`Seus Pontos: ${currentScore}`);
-                    
-                    const purchasedText = this.add.text(cardWidth / 2, cardHeight / 2, 'Comprado!', {fontSize: '16px', color: '#34d399'}).setOrigin(0.5);
-                    cardContainer.add(purchasedText);
-
-                    drawCard(false, true);
-                };
-
-                this.showBuyConfirmationModal(card, 'Card', finalCost, onConfirm);
-            });
-
-            let isHovered = false;
             cardContainer.on('pointerover', () => {
-                isHovered = true;
-                if (!isPurchased) drawCard(true, false, canAfford);
+                this.tweens.add({ targets: cardContainer, scale: 1.05, duration: 100 });
             });
             cardContainer.on('pointerout', () => {
-                isHovered = false;
-                if (!isPurchased) drawCard(false, false, canAfford);
+                this.tweens.add({ targets: cardContainer, scale: 1, duration: 100 });
             });
+            cardContainer.on('pointerdown', () => {
+                if (this.isModalOpen || this.registry.get('totalScore') < finalCost) return;
+                this.showBuyConfirmationModal(card, 'Card', finalCost, () => {
+                    SoundManager.play('buy');
+                    this.closeModal();
+                    let score = this.registry.get('totalScore');
+                    score -= finalCost;
+                    this.registry.set('totalScore', score);
+                    const deck = this.registry.get('playerDeck');
+                    deck.push(card);
+                    this.registry.set('playerDeck', deck);
+                    scoreText.setText(`Pontos Totais: ${score}`);
 
-            this.time.addEvent({
-                delay: 250,
-                loop: true,
-                callback: () => {
-                    canAfford = this.registry.get('totalScore') >= finalCost;
-                    if (!isPurchased) drawCard(isHovered, isPurchased, canAfford);
-                }
+                    bg.setAlpha(0.5);
+                    cardImage.setAlpha(0.5);
+                    name.setText('COMPRADO!');
+                    costGroup.setVisible(false);
+                    cardContainer.disableInteractive();
+                });
             });
         });
     }
 
-    // --- Modal Methods ---
+    displayShopRelic(relic: Relic, scoreText: Phaser.GameObjects.Text) {
+        const { width } = this.cameras.main;
+        const centerX = width / 2;
+        const cardWidth = 330;
+        const cardHeight = 100;
+        const y = 570;
+
+        const container = this.add.container(centerX, y);
+
+        // Shadow and Base
+        const shadow = this.add.graphics();
+        shadow.fillStyle(0x000000, 0.1);
+        shadow.fillRoundedRect(-cardWidth / 2, -cardHeight / 2 + 5, cardWidth, cardHeight, 25);
+
+        const bg = this.add.graphics();
+        bg.fillStyle(COLORS.white, 1);
+        bg.lineStyle(4, COLORS.popPurple, 0.5);
+        bg.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 25);
+        bg.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 25);
+
+        // Special Glow for Relic
+        const innerGlow = this.add.graphics();
+        innerGlow.fillStyle(COLORS.popPurple, 0.1);
+        innerGlow.fillRoundedRect(-cardWidth / 2 + 4, -cardHeight / 2 + 4, cardWidth - 8, cardHeight - 8, 20);
+
+        // Badge
+        const badgeCont = this.add.container(0, -cardHeight / 2);
+        const bBg = this.add.graphics();
+        bBg.fillStyle(COLORS.popGold, 1);
+        bBg.lineStyle(2, COLORS.white, 1);
+        bBg.fillRoundedRect(-60, -12, 120, 24, 12);
+        bBg.strokeRoundedRect(-60, -12, 120, 24, 12);
+        const bText = this.add.text(0, 0, '★ LENDÁRIO ★', { fontFamily: '"Fredoka One"', fontSize: '10px', color: '#5D4037' }).setOrigin(0.5);
+        badgeCont.add([bBg, bText]);
+
+        // Content
+        const imgHolder = this.add.graphics();
+        imgHolder.fillStyle(COLORS.popPurple, 0.15);
+        imgHolder.fillRoundedRect(-cardWidth / 2 + 15, -35, 70, 70, 15);
+
+        const emoji = this.add.text(-cardWidth / 2 + 50, 0, relic.emoji, { fontSize: '40px' }).setOrigin(0.5);
+        const name = this.add.text(-cardWidth / 2 + 100, -25, relic.name, { fontFamily: '"Fredoka One"', fontSize: '18px', color: '#AB47BC' }).setOrigin(0, 0.5);
+
+        const relicsInInv: Relic[] = this.registry.get('playerRelics') || [];
+        const hasBargainAmulet = relicsInInv.some(r => r.id === 'bargain_amulet');
+        const finalCost = hasBargainAmulet ? Math.floor(relic.cost * 0.85) : relic.cost;
+
+        const costCont = this.add.container(-cardWidth / 2 + 100, 20);
+        const costBg = this.add.graphics();
+        costBg.fillStyle(COLORS.popPurple, 1);
+        costBg.fillRoundedRect(0, -15, 120, 30, 15);
+        const costT = this.add.text(60, 0, `${finalCost} Pontos 🧶`, { fontFamily: '"Nunito"', fontSize: '14px', color: '#ffffff', fontStyle: '800' }).setOrigin(0.5);
+        costCont.add([costBg, costT]);
+
+        container.add([shadow, bg, innerGlow, badgeCont, imgHolder, emoji, name, costCont]);
+        container.setSize(cardWidth, cardHeight).setInteractive({ useHandCursor: true });
+
+        container.on('pointerdown', () => {
+            if (this.isModalOpen || this.registry.get('totalScore') < finalCost) return;
+            this.showBuyConfirmationModal(relic, 'Relic', finalCost, () => {
+                SoundManager.play('buy');
+                this.closeModal();
+                let score = this.registry.get('totalScore');
+                score -= finalCost;
+                this.registry.set('totalScore', score);
+                const playerRelics = this.registry.get('playerRelics');
+                playerRelics.push(relic);
+                this.registry.set('playerRelics', playerRelics);
+                scoreText.setText(`Pontos Totais: ${score}`);
+
+                bg.setAlpha(0.5);
+                emoji.setAlpha(0.5);
+                name.setText('ADQUIRIDO!');
+                costCont.setVisible(false);
+                container.disableInteractive();
+            });
+        });
+    }
+
     closeModal() {
         SoundManager.play('click');
         this.modalGroup.clear(true, true);
@@ -1603,26 +2235,77 @@ class ShopScene extends Phaser.Scene {
 
         const { width, height } = this.cameras.main;
         const centerX = width / 2;
+        const centerY = height / 2;
 
-        const blocker = this.add.graphics().fillStyle(0x000000, 0.7).fillRect(0, 0, width, height);
+        const blocker = this.add.graphics().fillStyle(COLORS.black, 0.8).fillRect(0, 0, width, height);
         blocker.setInteractive(new Phaser.Geom.Rectangle(0, 0, width, height), Phaser.Geom.Rectangle.Contains);
 
-        const modalBg = this.add.graphics().fillStyle(0x1f2937).fillRoundedRect(centerX - 160, 200, 320, 300, 15);
-        modalBg.lineStyle(2, 0x4f46e5).strokeRoundedRect(centerX - 160, 200, 320, 300, 15);
+        const modalY = centerY - 50;
+        const modalWidth = 320;
+        const modalHeight = 500;
 
-        const emoji = this.add.text(centerX, 240, item.emoji, { fontSize: '48px' }).setOrigin(0.5);
-        const name = this.add.text(centerX, 285, item.name, { fontSize: '20px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-        const desc = this.add.text(centerX, 330, item.description, { fontSize: '14px', color: '#d1d5db', align: 'center', wordWrap: { width: 280 } }).setOrigin(0.5);
-        const costText = this.add.text(centerX, 380, `Custo: ${cost} Pontos`, { fontSize: '16px', color: '#fcd34d', fontStyle: 'bold' }).setOrigin(0.5);
-        
-        const confirmText = itemType === 'Card' ? 'Comprar' : 'Adquirir';
-        const confirmButton = this.add.text(centerX - 70, 450, confirmText, { fontSize: '20px', color: '#fff', backgroundColor: '#16a34a', padding: { x: 15, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        confirmButton.on('pointerdown', onConfirm);
+        // Modal Shadow
+        const shadow = this.add.graphics().fillStyle(0x000000, 0.3).fillRoundedRect(centerX - modalWidth / 2 + 8, modalY - modalHeight / 2 + 8, modalWidth, modalHeight, 25);
 
-        const cancelButton = this.add.text(centerX + 70, 450, 'Cancelar', { fontSize: '20px', color: '#fff', backgroundColor: '#dc2626', padding: { x: 15, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        cancelButton.on('pointerdown', () => this.closeModal());
-        
-        this.modalGroup.addMultiple([blocker, modalBg, emoji, name, desc, costText, confirmButton, cancelButton]);
+        // Modal Body
+        const modalBg = this.add.graphics().fillStyle(COLORS.white, 1).fillRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, modalHeight, 25);
+        modalBg.lineStyle(6, COLORS.popPurple, 1).strokeRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, modalHeight, 25);
+
+        // Header
+        const headerH = 60;
+        const header = this.add.graphics().fillStyle(COLORS.pastelCream, 1).fillRoundedRect(centerX - modalWidth / 2, modalY - modalHeight / 2, modalWidth, headerH, { tl: 25, tr: 25, bl: 0, br: 0 });
+        header.lineStyle(2, 0xd1d5db, 1).moveTo(centerX - modalWidth / 2, modalY - modalHeight / 2 + headerH).lineTo(centerX + modalWidth / 2, modalY - modalHeight / 2 + headerH).strokePath();
+
+        const title = this.add.text(centerX, modalY - modalHeight / 2 + headerH / 2, item.name, {
+            fontFamily: 'Fredoka One',
+            fontSize: '22px',
+            color: COLORS.deepBrown
+        }).setOrigin(0.5);
+
+        // Art Focus
+        let art;
+        const artSize = 220;
+        if ((item as Card).image && this.textures.exists(item.id)) {
+            art = this.add.image(centerX, modalY - 40, item.id).setDisplaySize(artSize, artSize);
+        } else {
+            art = this.add.text(centerX, modalY - 40, item.emoji, { fontSize: '120px' }).setOrigin(0.5);
+        }
+
+        // Info Section
+        const infoBg = this.add.graphics().fillStyle(0xF5E6D3, 0.5).fillRoundedRect(centerX - 140, modalY + 95, 280, 110, 15);
+        const desc = this.add.text(centerX, modalY + 130, item.description, {
+            fontFamily: 'Nunito',
+            fontSize: '14px',
+            color: COLORS.deepBrown,
+            align: 'center',
+            wordWrap: { width: 260 },
+            fontStyle: '600'
+        }).setOrigin(0.5);
+
+        const costText = this.add.text(centerX, modalY + 185, `Custo: ${cost} Pontos 🧶`, {
+            fontFamily: 'Fredoka One',
+            fontSize: '18px',
+            color: '#AB47BC'
+        }).setOrigin(0.5);
+
+        // Buttons
+        const btnY = modalY + 260;
+        const confirmBtn = this.add.container(centerX - 75, btnY);
+        const confirmLabel = itemType === 'Card' ? 'Comprar' : 'Adquirir';
+        const cBg = this.add.graphics().fillStyle(0x16a34a, 1).fillRoundedRect(-65, -20, 130, 40, 20);
+        const cTxt = this.add.text(0, 0, confirmLabel, { fontFamily: 'Fredoka One', fontSize: '18px', color: '#fff' }).setOrigin(0.5);
+        confirmBtn.add([cBg, cTxt]);
+        confirmBtn.setSize(130, 40).setInteractive({ useHandCursor: true });
+        confirmBtn.on('pointerdown', onConfirm);
+
+        const cancelBtn = this.add.container(centerX + 75, btnY);
+        const rBg = this.add.graphics().fillStyle(COLORS.btnRed, 1).fillRoundedRect(-65, -20, 130, 40, 20);
+        const rTxt = this.add.text(0, 0, 'Voltar', { fontFamily: 'Fredoka One', fontSize: '18px', color: '#fff' }).setOrigin(0.5);
+        cancelBtn.add([rBg, rTxt]);
+        cancelBtn.setSize(130, 40).setInteractive({ useHandCursor: true });
+        cancelBtn.on('pointerdown', () => this.closeModal());
+
+        this.modalGroup.addMultiple([blocker, shadow, modalBg, header, title, art, infoBg, desc, costText, confirmBtn, cancelBtn]);
         this.modalGroup.setVisible(true);
     }
 }
@@ -1636,15 +2319,16 @@ class GameOverScene extends Phaser.Scene {
     tweens!: Phaser.Tweens.TweenManager;
 
     constructor() { super('GameOverScene'); }
-    
+
     create() {
-        const centerX = this.cameras.main.width / 2;
-        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+        this.add.image(centerX, height / 2, 'fundo_fase').setDisplaySize(width, height);
         const finalScore = this.registry.get('totalScore');
         const finalPhase = this.registry.get('currentPhase');
         const highScore = this.registry.get('highScore');
         let newHighScore = false;
-        
+
         if (finalScore > highScore) {
             setHighScore(finalScore);
             this.registry.set('highScore', finalScore);
@@ -1672,7 +2356,7 @@ class GameOverScene extends Phaser.Scene {
             this.registry.set('playerDeck', startingDeck);
             this.scene.start('PhaseIntroScene');
         });
-        
+
         const menuButton = this.add.text(centerX, 560, 'Menu Principal', { fontSize: '28px', color: '#ffffff', backgroundColor: '#4a5568', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         menuButton.on('pointerdown', () => {
             SoundManager.play('click');
@@ -1691,12 +2375,13 @@ class GameWonScene extends Phaser.Scene {
     constructor() { super('GameWonScene'); }
 
     create() {
-        const centerX = this.cameras.main.width / 2;
-        this.add.image(centerX, this.cameras.main.height / 2, 'fundo').setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+        const { width, height } = this.cameras.main;
+        const centerX = width / 2;
+        this.add.image(centerX, height / 2, 'fundo_fase').setDisplaySize(width, height);
         const finalScore = this.registry.get('totalScore');
         const highScore = this.registry.get('highScore');
         let newHighScore = false;
-        
+
         if (finalScore > highScore) {
             setHighScore(finalScore);
             this.registry.set('highScore', finalScore);
@@ -1724,7 +2409,7 @@ class GameWonScene extends Phaser.Scene {
             this.registry.set('playerDeck', startingDeck);
             this.scene.start('PhaseIntroScene');
         });
-        
+
         const menuButton = this.add.text(centerX, 560, 'Menu Principal', { fontSize: '28px', color: '#ffffff', backgroundColor: '#4a5568', padding: { x: 20, y: 10 }, fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         menuButton.on('pointerdown', () => {
             SoundManager.play('click');
